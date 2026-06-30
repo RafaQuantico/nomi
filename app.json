@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "NOMI",
+    "slug": "nomi-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "nomi-app",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.nomi-app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "NOMI necesita acceder al micrófono para el test de voz de fatiga.",
+        "NSCameraUsageDescription": "No se usa cámara.",
+        "UIBackgroundModes": ["audio"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.nomiapp",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "nomi-app" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "shortName": "NOMI",
+      "name": "NOMI - Asistente",
+      "themeColor": "#E6F4FE",
+      "backgroundColor": "#FFFFFF",
+      "display": "standalone"
+    },
+    "plugins": []
+  }
+}
