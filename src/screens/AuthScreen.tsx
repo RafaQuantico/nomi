@@ -15,6 +15,7 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { useAuth } from '../context/AuthContext';
+import { sendWelcomeEmail } from '../services/webhookService';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Auth'>;
@@ -47,6 +48,12 @@ export default function AuthScreen({ navigation }: Props) {
     try {
       if (mode === 'create') {
         await createUser(nickname.trim(), email.trim(), passkey.trim());
+        // Enviar el correo de bienvenida en segundo plano sin bloquear
+        sendWelcomeEmail({
+          email: email.trim(),
+          nickname: nickname.trim(),
+          deepLinkUrl: Platform.OS === 'web' ? window.location.origin : 'nomiapp://',
+        }).catch(() => {});
       } else {
         await login(identifier.trim(), passkey.trim());
       }

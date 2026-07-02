@@ -32,6 +32,7 @@ export async function sendWelcomeEmail(payload: WelcomeEmailPayload): Promise<vo
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'welcome_email', ...payload }),
       redirect: 'follow',
+      mode: 'no-cors',
     });
   } catch (error) {
     console.warn('Error sending welcome email:', error);
@@ -88,6 +89,7 @@ export async function sendTestCompletedWebhook(payload: TestCompletedPayload): P
         audios,
       }),
       redirect: 'follow',
+      mode: 'no-cors',
     });
   } catch (error) {
     console.warn('Error sending test completed:', error);
