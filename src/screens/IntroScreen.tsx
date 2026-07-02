@@ -50,7 +50,7 @@ export default function IntroScreen({ navigation }: Props) {
         style={[
           StyleSheet.absoluteFill,
           { width: '100%', height: '100%' },
-          Platform.OS === 'web' && { transform: [{ rotate: '90deg' }, { scale: 1.8 }] }
+          Platform.OS === 'web' && { transform: [{ rotate: '90deg' }, { scale: 3.5 }] }
         ]}
         resizeMode={ResizeMode.COVER}
         isLooping
