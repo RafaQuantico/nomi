@@ -1,8 +1,8 @@
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
-// 🔧 Reemplaza esta URL con la que te genera Google Apps Script al publicar
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzuckGDrAO4FXJvhTS08XbYDQyGmiVS-masTb7Ov3lHu8sDZpOV8_vpudET0b7NXkZe/exec';
+// Proxy en Vercel — evita CORS al llamar a Google Apps Script
+const APPS_SCRIPT_URL = '/api/webhook';
 
 export interface WelcomeEmailPayload {
   email: string;
@@ -29,9 +29,8 @@ export async function sendWelcomeEmail(payload: WelcomeEmailPayload): Promise<vo
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'welcome_email', ...payload }),
-      mode: 'no-cors',
     });
   } catch (error) {
     console.warn('Error sending welcome email:', error);
@@ -77,7 +76,7 @@ export async function sendTestCompletedWebhook(payload: TestCompletedPayload): P
 
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'test_completed',
         email: payload.email,
@@ -87,7 +86,6 @@ export async function sendTestCompletedWebhook(payload: TestCompletedPayload): P
         completedAt: payload.completedAt,
         audios,
       }),
-      mode: 'no-cors',
     });
   } catch (error) {
     console.warn('Error sending test completed:', error);
