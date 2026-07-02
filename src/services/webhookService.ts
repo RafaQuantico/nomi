@@ -29,9 +29,8 @@ export async function sendWelcomeEmail(payload: WelcomeEmailPayload): Promise<vo
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'welcome_email', ...payload }),
-      redirect: 'follow',
       mode: 'no-cors',
     });
   } catch (error) {
@@ -78,7 +77,7 @@ export async function sendTestCompletedWebhook(payload: TestCompletedPayload): P
 
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         action: 'test_completed',
         email: payload.email,
@@ -88,7 +87,6 @@ export async function sendTestCompletedWebhook(payload: TestCompletedPayload): P
         completedAt: payload.completedAt,
         audios,
       }),
-      redirect: 'follow',
       mode: 'no-cors',
     });
   } catch (error) {
