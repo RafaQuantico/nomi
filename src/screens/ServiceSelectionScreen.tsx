@@ -93,7 +93,13 @@ export default function ServiceSelectionScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  scroll: { padding: 24, paddingBottom: 40 },
+  scroll: { 
+    padding: 24, 
+    paddingBottom: 40,
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -113,10 +119,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 16,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   card: {
     width: '46%',
+    minWidth: 150,
+    maxWidth: 220,
     aspectRatio: 0.9,
     borderRadius: 20,
     alignItems: 'center',

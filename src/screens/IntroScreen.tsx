@@ -5,6 +5,7 @@ import {
   Animated,
   TouchableOpacity,
   Text,
+  Platform,
 } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -46,10 +47,15 @@ export default function IntroScreen({ navigation }: Props) {
     <View style={styles.container}>
       <Video
         source={require('../../assets/bgn01.mp4')}
-        style={StyleSheet.absoluteFill}
+        style={[
+          StyleSheet.absoluteFill,
+          { width: '100%', height: '100%' },
+          Platform.OS === 'web' && { transform: [{ rotate: '90deg' }, { scale: 1.8 }] }
+        ]}
         resizeMode={ResizeMode.COVER}
         isLooping
         shouldPlay
+        isMuted={true}
       />
       <View style={styles.centerContainer}>
         <Animated.Image
