@@ -12,6 +12,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { useAuth } from '../context/AuthContext';
 import { sendWelcomeEmail } from '../services/webhookService';
+import { Platform } from 'react-native';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'ServiceSelection'>;
@@ -38,7 +39,7 @@ export default function ServiceSelectionScreen({ navigation }: Props) {
   async function handleFatiguePress() {
     // Enviar email de bienvenida + instrucciones via webhook
     if (user) {
-      const deepLink = 'nomi-app://test';
+      const deepLink = Platform.OS === 'web' ? `${window.location.origin}/test` : 'nomi-app://test';
       sendWelcomeEmail({
         email: user.email,
         nickname: user.nickname,
