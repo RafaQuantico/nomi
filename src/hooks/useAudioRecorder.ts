@@ -192,14 +192,21 @@ export function useAudioRecorder({
 
     if (Platform.OS === 'web') {
       if (webMediaRecorderRef.current && webMediaRecorderRef.current.state !== 'inactive') {
-        webMediaRecorderRef.current.stop();
-        // Detener pistas del micrófono para que no se quede encendido en el navegador
-        webMediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-        
-        // Crear el blob final y una url local
-        const finalBlob = new Blob(webChunksRef.current, { type: 'audio/webm' });
-        uri = URL.createObjectURL(finalBlob);
-        setFinalUri(uri);
+        return new Promise<string | null>((resolve) => {
+          webMediaRecorderRef.current!.onstop = () => {
+            const finalBlob = new Blob(webChunksRef.current, { type: 'audio/webm' });
+            uri = URL.createObjectURL(finalBlob);
+            setFinalUri(uri);
+            
+            if (socketRef.current?.readyState === WebSocket.OPEN) {
+              socketRef.current.send(JSON.stringify({ type: 'audio_end' }));
+            }
+            resolve(uri);
+          };
+          webMediaRecorderRef.current!.stop();
+          // Detener pistas del micrófono para que no se quede encendido en el navegador
+          webMediaRecorderRef.current!.stream.getTracks().forEach(track => track.stop());
+        });
       }
     } else {
       if (recordingRef.current) {
