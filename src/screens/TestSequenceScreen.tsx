@@ -8,6 +8,7 @@ import {
   Animated,
   Modal,
   Easing,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -157,6 +158,8 @@ export default function TestSequenceScreen({ navigation, route }: Props) {
       } else {
         setIsComplete(true);
         if (user) {
+          const isWeb = Platform.OS === 'web';
+          const ext = isWeb ? 'audio/webm' : 'audio/m4a';
           sendTestCompletedWebhook({
             email: user.email,
             nickname: user.nickname,
@@ -164,9 +167,9 @@ export default function TestSequenceScreen({ navigation, route }: Props) {
             eventPhase,
             completedAt: new Date().toISOString(),
             audioUris: [
-              { label: 'Vocal-A',  uri: audioUrisRef.current[0] ?? '', mimeType: 'audio/m4a' },
-              { label: 'Frase',    uri: audioUrisRef.current[1] ?? '', mimeType: 'audio/m4a' },
-              { label: 'Desayuno', uri: audioUrisRef.current[2] ?? '', mimeType: 'audio/m4a' },
+              { label: 'Vocal-A',  uri: audioUrisRef.current[0] ?? '', mimeType: ext },
+              { label: 'Frase',    uri: audioUrisRef.current[1] ?? '', mimeType: ext },
+              { label: 'Desayuno', uri: audioUrisRef.current[2] ?? '', mimeType: ext },
             ],
           });
         }
