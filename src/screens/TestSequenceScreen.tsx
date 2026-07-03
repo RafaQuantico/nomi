@@ -56,7 +56,7 @@ const TEST_STEPS = [
     recordingLabel: '"¿Qué desayunaste hoy?"',
     showDuringRecording: true,
     label: 'Desayuno',
-    thankYou: '¡Muchas gracias! Estas grabaciones serán analizadas por NOMI y enviadas a Recursos Humanos.',
+    thankYou: '¡Muchas gracias! Estas grabaciones serán analizadas por NOMI.',
     autoStop: false,
   },
 ];
@@ -183,7 +183,7 @@ export default function TestSequenceScreen({ navigation, route }: Props) {
           </View>
           <Text style={styles.completedTitle}>¡Test completado!</Text>
           <Text style={styles.completedBody}>
-            Muchas gracias. Tus grabaciones serán analizadas por NOMI y enviadas a Recursos Humanos.{'\n\n'}Recibirás un correo de confirmación.
+            Muchas gracias. Tus grabaciones serán analizadas por NOMI.{'\n\n'}Recibirás un correo de confirmación.
           </Text>
           <TouchableOpacity
             style={styles.doneButton}
