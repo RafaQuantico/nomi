@@ -11,6 +11,7 @@ import ServiceSelectionScreen from './src/screens/ServiceSelectionScreen';
 import EmailConfirmationScreen from './src/screens/EmailConfirmationScreen';
 import TestSetupScreen from './src/screens/TestSetupScreen';
 import TestSequenceScreen from './src/screens/TestSequenceScreen';
+import MentalHealthTargetScreen from './src/screens/MentalHealthTargetScreen';
 
 export type RootStackParamList = {
   Intro: undefined;
@@ -19,6 +20,7 @@ export type RootStackParamList = {
   EmailConfirmation: undefined;
   TestSetup: undefined;
   TestSequence: { eventPhase: 'activo' | 'cansado' };
+  MentalHealthTarget: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -55,6 +57,7 @@ function AppNavigator() {
       <Stack.Screen name="EmailConfirmation" component={EmailConfirmationScreen} />
       <Stack.Screen name="TestSetup" component={TestSetupScreen} />
       <Stack.Screen name="TestSequence" component={TestSequenceScreen} />
+      <Stack.Screen name="MentalHealthTarget" component={MentalHealthTargetScreen} />
     </Stack.Navigator>
   );
 }

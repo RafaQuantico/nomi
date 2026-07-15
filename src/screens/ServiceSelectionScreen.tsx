@@ -22,7 +22,7 @@ type ServiceIcon = { lib: 'Feather' | 'MCI'; name: string };
 
 const services: { id: string; title: string; iconLib: 'Feather' | 'MCI'; iconName: string; active: boolean }[] = [
   { id: 'fatigue',  title: 'Fatiga',       iconLib: 'Feather', iconName: 'zap',          active: true  },
-  { id: 'mental',   title: 'Salud Mental', iconLib: 'Feather', iconName: 'heart',         active: false },
+  { id: 'mental',   title: 'Salud Mental', iconLib: 'Feather', iconName: 'heart',        active: true  },
   { id: 'alcohol',  title: 'Alcohol',      iconLib: 'MCI',     iconName: 'glass-wine',    active: false },
   { id: 'drugs',    title: 'Drogas',       iconLib: 'MCI',     iconName: 'pill',          active: false },
 ];
@@ -36,17 +36,21 @@ function ServiceCardIcon({ lib, name, active }: { lib: 'Feather' | 'MCI'; name: 
 export default function ServiceSelectionScreen({ navigation }: Props) {
   const { user, logout } = useAuth();
 
-  async function handleFatiguePress() {
-    // Enviar email de bienvenida + instrucciones via webhook
-    if (user) {
-      const deepLink = Platform.OS === 'web' ? `${window.location.origin}/test` : 'nomi-app://test';
-      sendWelcomeEmail({
-        email: user.email,
-        nickname: user.nickname,
-        deepLinkUrl: deepLink,
-      });
+  async function handleServicePress(serviceId: string) {
+    if (serviceId === 'fatigue') {
+      // Enviar email de bienvenida + instrucciones via webhook
+      if (user) {
+        const deepLink = Platform.OS === 'web' ? `${window.location.origin}/test` : 'nomi-app://test';
+        sendWelcomeEmail({
+          email: user.email,
+          nickname: user.nickname,
+          deepLinkUrl: deepLink,
+        });
+      }
+      navigation.navigate('EmailConfirmation');
+    } else if (serviceId === 'mental') {
+      navigation.navigate('MentalHealthTarget');
     }
-    navigation.navigate('EmailConfirmation');
   }
 
   return (
@@ -70,7 +74,7 @@ export default function ServiceSelectionScreen({ navigation }: Props) {
                 styles.card,
                 service.active ? styles.cardActive : styles.cardInactive,
               ]}
-              onPress={service.active ? handleFatiguePress : undefined}
+              onPress={service.active ? () => handleServicePress(service.id) : undefined}
               activeOpacity={service.active ? 0.7 : 1}
             >
               <View style={styles.cardIconWrapper}>

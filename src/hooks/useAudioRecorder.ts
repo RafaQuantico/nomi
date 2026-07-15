@@ -37,15 +37,22 @@ export function useAudioRecorder({
 
   // Web specific refs
   const webMediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const webWsMediaRecorderRef = useRef<MediaRecorder | null>(null);
   const webChunksRef = useRef<Blob[]>([]);
 
   const startRecording = useCallback(async () => {
     try {
       if (Platform.OS === 'web') {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        webMediaRecorderRef.current = mediaRecorder;
+        
+        // Recorder 1: Para el archivo final (sin timeslice, evita corrupción de WebM)
+        const fileMediaRecorder = new MediaRecorder(stream);
+        webMediaRecorderRef.current = fileMediaRecorder;
         webChunksRef.current = [];
+
+        // Recorder 2: Para el WebSocket (con timeslice)
+        const wsMediaRecorder = new MediaRecorder(stream);
+        webWsMediaRecorderRef.current = wsMediaRecorder;
 
         const ws = new WebSocket(WS_URL);
         socketRef.current = ws;
@@ -70,13 +77,17 @@ export function useAudioRecorder({
           } catch { /* silenciar errores JSON */ }
         });
 
-        mediaRecorder.ondataavailable = async (e) => {
+        // Enviar chunks al WebSocket en tiempo real
+        wsMediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0 && socketRef.current?.readyState === WebSocket.OPEN) {
+            socketRef.current.send(e.data); // Enviar blob directo es más eficiente
+          }
+        };
+
+        // Guardar el archivo final intacto
+        fileMediaRecorder.ondataavailable = (e) => {
           if (e.data.size > 0) {
             webChunksRef.current.push(e.data);
-            if (socketRef.current?.readyState === WebSocket.OPEN) {
-              const buffer = await e.data.arrayBuffer();
-              socketRef.current.send(buffer);
-            }
           }
         };
 
@@ -85,7 +96,9 @@ export function useAudioRecorder({
           setMetering(Math.random() * 0.5 + 0.5); 
         }, 100);
 
-        mediaRecorder.start(CHUNK_INTERVAL_MS);
+        wsMediaRecorder.start(CHUNK_INTERVAL_MS);
+        fileMediaRecorder.start(); // sin timeslice!
+        
         setRecordingState('recording');
         onStatus?.('Escuchando... habla ahora.');
         return;
@@ -192,9 +205,15 @@ export function useAudioRecorder({
 
     if (Platform.OS === 'web') {
       if (webMediaRecorderRef.current && webMediaRecorderRef.current.state !== 'inactive') {
+        const currentMime = webMediaRecorderRef.current.mimeType || 'audio/webm';
+        
+        if (webWsMediaRecorderRef.current && webWsMediaRecorderRef.current.state !== 'inactive') {
+          webWsMediaRecorderRef.current.stop();
+        }
+
         return new Promise<string | null>((resolve) => {
           webMediaRecorderRef.current!.onstop = () => {
-            const finalBlob = new Blob(webChunksRef.current, { type: 'audio/webm' });
+            const finalBlob = new Blob(webChunksRef.current, { type: currentMime });
             uri = URL.createObjectURL(finalBlob);
             setFinalUri(uri);
             

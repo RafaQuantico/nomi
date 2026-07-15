@@ -53,7 +53,7 @@ export default function AuthScreen({ navigation }: Props) {
           email: email.trim(),
           nickname: nickname.trim(),
           deepLinkUrl: Platform.OS === 'web' ? `${window.location.origin}/test` : 'nomi-app://test',
-        }).catch(() => {});
+        }).catch(() => { });
       } else {
         await login(identifier.trim(), passkey.trim());
       }
