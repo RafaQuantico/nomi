@@ -19,6 +19,9 @@ import MentalHealthUniversitarioIntroScreen from './src/screens/MentalHealthUniv
 import MentalHealthQuestionScreen from './src/screens/MentalHealthQuestionScreen';
 import MentalHealthFinalScreen from './src/screens/MentalHealthFinalScreen';
 import MentalHealthSuccessScreen from './src/screens/MentalHealthSuccessScreen';
+import DashboardAuthScreen from './src/screens/DashboardAuthScreen';
+import DashboardWelcomeScreen from './src/screens/DashboardWelcomeScreen';
+import DashboardInteractiveScreen from './src/screens/DashboardInteractiveScreen';
 
 export type RootStackParamList = {
   Intro: undefined;
@@ -35,16 +38,23 @@ export type RootStackParamList = {
   MentalHealthQuestion: { target: 'escolar' | 'universitario' };
   MentalHealthFinal: { target: 'escolar' | 'universitario'; answers: string[] };
   MentalHealthSuccess: undefined;
+  DashboardAuth: undefined;
+  DashboardWelcome: { auth?: string; authenticated?: boolean };
+  DashboardInteractive: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 // Configuración de deep linking: nomi-app://test abre TestSetup
+const webPrefix = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8081';
+
 const linking = {
-  prefixes: ['nomi-app://'],
+  prefixes: ['nomi-app://', webPrefix],
   config: {
     screens: {
       TestSetup: 'test',
+      DashboardWelcome: 'dashboard/welcome',
+      DashboardAuth: 'dashboard',
     },
   },
 };
@@ -79,6 +89,9 @@ function AppNavigator() {
       <Stack.Screen name="MentalHealthQuestion" component={MentalHealthQuestionScreen} />
       <Stack.Screen name="MentalHealthFinal" component={MentalHealthFinalScreen} />
       <Stack.Screen name="MentalHealthSuccess" component={MentalHealthSuccessScreen} />
+      <Stack.Screen name="DashboardAuth" component={DashboardAuthScreen} />
+      <Stack.Screen name="DashboardWelcome" component={DashboardWelcomeScreen} />
+      <Stack.Screen name="DashboardInteractive" component={DashboardInteractiveScreen} />
     </Stack.Navigator>
   );
 }

@@ -143,6 +143,7 @@ export async function sendMentalHealthCompletedWebhook(payload: MentalHealthComp
           label: payload.audioUri?.label
         } : null,
         completedAt: payload.completedAt,
+        appUrl: Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : 'nomi-app://'
       }),
     });
 
@@ -176,3 +177,35 @@ export async function sendMentalHealthCompletedWebhook(payload: MentalHealthComp
     throw error;
   }
 }
+
+export interface DashboardData {
+  target: string;
+  route: string;
+  textResponse: string;
+}
+
+export async function fetchDashboardData(): Promise<DashboardData[]> {
+  try {
+    const url = `${APPS_SCRIPT_URL}?action=get_dashboard_data`;
+    // We cannot use 'no-cors' here because we need to read the JSON response.
+    // The Apps Script must support CORS or we just use normal fetch.
+    const response = await fetch(url, {
+      method: 'GET',
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const json = await response.json();
+    if (json.status === 'success') {
+      return json.data || [];
+    } else {
+      throw new Error(json.error || 'Unknown error');
+    }
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    throw error;
+  }
+}
+
