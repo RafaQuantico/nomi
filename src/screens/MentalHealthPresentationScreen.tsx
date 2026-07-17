@@ -6,7 +6,11 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
+  Animated,
+  Easing,
 } from 'react-native';
+import { Audio } from 'expo-av';
+import { useRef, useEffect } from 'react';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { Feather } from '@expo/vector-icons';
@@ -17,8 +21,55 @@ type Props = {
 
 export default function MentalHealthPresentationScreen({ navigation }: Props) {
   function handleStart() {
+    if (soundRef.current) {
+      soundRef.current.unloadAsync();
+    }
     navigation.navigate('MentalHealthTarget');
   }
+
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  const anim1 = useRef(new Animated.Value(6)).current;
+  const anim2 = useRef(new Animated.Value(6)).current;
+  const anim3 = useRef(new Animated.Value(6)).current;
+  const anim4 = useRef(new Animated.Value(6)).current;
+  const anim5 = useRef(new Animated.Value(6)).current;
+
+  useEffect(() => {
+    async function playSound() {
+      try {
+        const { sound } = await Audio.Sound.createAsync(
+          require('../../assets/vo/nomi01.mp3')
+        );
+        soundRef.current = sound;
+        await sound.playAsync();
+      } catch (err) {
+        console.warn('Error playing audio', err);
+      }
+    }
+    playSound();
+
+    const startAnim = (anim: Animated.Value, max: number, duration: number) => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, { toValue: max, duration, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
+          Animated.timing(anim, { toValue: 6, duration, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
+        ])
+      ).start();
+    };
+
+    startAnim(anim1, 16, 400);
+    startAnim(anim2, 24, 300);
+    startAnim(anim3, 32, 500);
+    startAnim(anim4, 24, 350);
+    startAnim(anim5, 16, 450);
+
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -46,6 +97,14 @@ export default function MentalHealthPresentationScreen({ navigation }: Props) {
         <TouchableOpacity style={styles.button} onPress={handleStart} activeOpacity={0.8}>
           <Text style={styles.buttonText}>Comenzar experiencia</Text>
         </TouchableOpacity>
+
+        <View style={styles.waveformContainer}>
+          <Animated.View style={[styles.waveBar, { height: anim1 }]} />
+          <Animated.View style={[styles.waveBar, { height: anim2 }]} />
+          <Animated.View style={[styles.waveBar, { height: anim3 }]} />
+          <Animated.View style={[styles.waveBar, { height: anim4 }]} />
+          <Animated.View style={[styles.waveBar, { height: anim5 }]} />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -106,6 +165,19 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '700',
   },
+  waveformContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 40,
+    gap: 4,
+    height: 32,
+  },
+  waveBar: {
+    width: 6,
+    backgroundColor: '#000',
+    borderRadius: 3,
+  }
 });

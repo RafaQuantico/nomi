@@ -57,6 +57,13 @@ Se compila a través de EAS (Expo Application Services) usando los comandos est�
 - **UI:** Se incluyó un visualizador de frecuencias animado reactivo a la voz en la pantalla de respuesta libre de salud mental.
 - **Estado de Transcripción:** En la iteración actual **NO se realiza transcripción automática (Speech-to-Text)**. Todos los audios (Fatiga y Salud Mental) se suben directamente a Google Drive como `.webm` o `.m4a` y el link se almacena en la planilla. Se deja pendiente para futuras implementaciones.
 
+### Actualizaciones del Módulo Dashboard y Salud Mental
+- **Dashboard Interactivo:** Se crearon las pantallas `DashboardAuthScreen` (protegida por contraseña Admin1122!), `DashboardWelcomeScreen` y `DashboardInteractiveScreen`. El dashboard lee los datos desde Google Sheets a través de Apps Script y muestra métricas totales por público, distribución porcentual de rutas (Promoción, Prevención, Intervención, Riesgo, Sin clasificar) y análisis de palabras clave frecuentes en respuestas abiertas.
+- **Ruteo Dinámico (Deep Linking Web):** Se actualizó `App.tsx` para incluir `window.location.origin` en los prefijos de ruteo (`linking`), permitiendo accesos directos desde el navegador web como `http://localhost:8081/dashboard`.
+- **Integración con Google Sheets (Columnas Dinámicas):** En Apps Script, ahora el sistema detecta dinámicamente el índice de las columnas buscando los textos de cabecera (`Público`, `Escrita`, `Ruta`). **Requisito obligatorio:** Las columnas M1 y N1 de la hoja de cálculos deben llamarse exactamente `Puntaje Total` y `Ruta Asignada` respectivamente para que el Dashboard funcione sin arrojar 0%.
+- **Correos Electrónicos Mejorados:** El webhook envía el logo en Base64 directamente incrustado en el HTML del correo. El botón de resultados usa la URL origin (`appUrl`) inyectada dinámicamente desde `webhookService.ts`.
+- **Presentación Salud Mental con Audio:** La pantalla `MentalHealthPresentationScreen` reproduce automáticamente `nomi01.mp3` e incluye un icono animado de forma de onda sonora. Se guardó un archivo paralelo llamado `MentalHealthPresentationScreen.subtitles.tsx` que contiene el código para sincronizar subtítulos precisos con la posición de reproducción del audio (`positionMillis`), en caso de querer activar la funcionalidad estilo teleprompter/karaoke en el futuro.
+
 ---
 
 > **Nota para el Agente / Asistente de IA:** 
