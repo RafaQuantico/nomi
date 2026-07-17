@@ -33,6 +33,7 @@ export interface MentalHealthCompletedPayload {
   email: string;
   nickname: string;
   uuid: string;
+  target: 'escolar' | 'universitario';
   answers: string[];
   textResponse: string;
   audioUri?: AudioPayload;
@@ -133,6 +134,7 @@ export async function sendMentalHealthCompletedWebhook(payload: MentalHealthComp
         email: payload.email,
         nickname: payload.nickname,
         uuid: payload.uuid,
+        target: payload.target,
         answers: payload.answers,
         textResponse: payload.textResponse,
         audio: base64 ? {

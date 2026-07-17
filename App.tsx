@@ -11,8 +11,11 @@ import ServiceSelectionScreen from './src/screens/ServiceSelectionScreen';
 import EmailConfirmationScreen from './src/screens/EmailConfirmationScreen';
 import TestSetupScreen from './src/screens/TestSetupScreen';
 import TestSequenceScreen from './src/screens/TestSequenceScreen';
+import MentalHealthPresentationScreen from './src/screens/MentalHealthPresentationScreen';
 import MentalHealthTargetScreen from './src/screens/MentalHealthTargetScreen';
+import MentalHealthMockupDisclaimerScreen from './src/screens/MentalHealthMockupDisclaimerScreen';
 import MentalHealthEscolarIntroScreen from './src/screens/MentalHealthEscolarIntroScreen';
+import MentalHealthUniversitarioIntroScreen from './src/screens/MentalHealthUniversitarioIntroScreen';
 import MentalHealthQuestionScreen from './src/screens/MentalHealthQuestionScreen';
 import MentalHealthFinalScreen from './src/screens/MentalHealthFinalScreen';
 import MentalHealthSuccessScreen from './src/screens/MentalHealthSuccessScreen';
@@ -24,10 +27,13 @@ export type RootStackParamList = {
   EmailConfirmation: undefined;
   TestSetup: undefined;
   TestSequence: { eventPhase: 'activo' | 'cansado' };
+  MentalHealthPresentation: undefined;
   MentalHealthTarget: undefined;
+  MentalHealthMockupDisclaimer: { target: 'escolar' | 'universitario' };
   MentalHealthEscolarIntro: undefined;
-  MentalHealthQuestion: undefined;
-  MentalHealthFinal: { answers: string[] };
+  MentalHealthUniversitarioIntro: undefined;
+  MentalHealthQuestion: { target: 'escolar' | 'universitario' };
+  MentalHealthFinal: { target: 'escolar' | 'universitario'; answers: string[] };
   MentalHealthSuccess: undefined;
 };
 
@@ -65,8 +71,11 @@ function AppNavigator() {
       <Stack.Screen name="EmailConfirmation" component={EmailConfirmationScreen} />
       <Stack.Screen name="TestSetup" component={TestSetupScreen} />
       <Stack.Screen name="TestSequence" component={TestSequenceScreen} />
+      <Stack.Screen name="MentalHealthPresentation" component={MentalHealthPresentationScreen} />
       <Stack.Screen name="MentalHealthTarget" component={MentalHealthTargetScreen} />
+      <Stack.Screen name="MentalHealthMockupDisclaimer" component={MentalHealthMockupDisclaimerScreen} />
       <Stack.Screen name="MentalHealthEscolarIntro" component={MentalHealthEscolarIntroScreen} />
+      <Stack.Screen name="MentalHealthUniversitarioIntro" component={MentalHealthUniversitarioIntroScreen} />
       <Stack.Screen name="MentalHealthQuestion" component={MentalHealthQuestionScreen} />
       <Stack.Screen name="MentalHealthFinal" component={MentalHealthFinalScreen} />
       <Stack.Screen name="MentalHealthSuccess" component={MentalHealthSuccessScreen} />

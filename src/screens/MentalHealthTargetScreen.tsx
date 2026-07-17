@@ -17,12 +17,7 @@ type Props = {
 
 export default function MentalHealthTargetScreen({ navigation }: Props) {
   function handleSelect(type: 'escolar' | 'universitario') {
-    if (type === 'escolar') {
-      navigation.navigate('MentalHealthEscolarIntro');
-    } else {
-      console.log('Seleccionado:', type);
-      // navigation.navigate('SiguientePantallaUniversitario');
-    }
+    navigation.navigate('MentalHealthMockupDisclaimer', { target: type });
   }
 
   return (

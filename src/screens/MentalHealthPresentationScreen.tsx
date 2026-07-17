@@ -12,12 +12,12 @@ import { RootStackParamList } from '../../App';
 import { Feather } from '@expo/vector-icons';
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'MentalHealthEscolarIntro'>;
+  navigation: NativeStackNavigationProp<RootStackParamList, 'MentalHealthPresentation'>;
 };
 
-export default function MentalHealthEscolarIntroScreen({ navigation }: Props) {
+export default function MentalHealthPresentationScreen({ navigation }: Props) {
   function handleStart() {
-    navigation.navigate('MentalHealthQuestion', { target: 'escolar' });
+    navigation.navigate('MentalHealthTarget');
   }
 
   return (
@@ -28,39 +28,23 @@ export default function MentalHealthEscolarIntroScreen({ navigation }: Props) {
         </TouchableOpacity>
 
         <View style={styles.header}>
-          <Text style={styles.title}>Instrucciones</Text>
+          <Text style={styles.title}>NOMI Learning Care</Text>
         </View>
 
         <View style={styles.card}>
           <Text style={styles.paragraph}>
-            Hola. Esta es una experiencia breve para conocer cómo te has sentido durante las últimas dos semanas. Te haré seis preguntas.
+            Esta experiencia permite conocer cómo NOMI Learning Care ayuda a una comunidad educativa a comprender y ordenar sus necesidades de salud mental.
           </Text>
           <Text style={styles.paragraph}>
-            En cada una, responde con qué frecuencia te pasó lo que describo. Puedes responder:
-          </Text>
-          <View style={styles.optionsList}>
-            <Text style={styles.bulletItem}>• "Nunca."</Text>
-            <Text style={styles.bulletItem}>• "Algunos días."</Text>
-            <Text style={styles.bulletItem}>• "Más de la mitad de los días."</Text>
-            <Text style={styles.bulletItem}>• "Casi todos los días."</Text>
-          </View>
-          <Text style={styles.paragraph}>
-            No hay respuestas correctas o incorrectas.
+            A través de una conversación breve, el sistema identifica señales asociadas al ánimo, la ansiedad y la sobrecarga, incorpora el contexto expresado por cada persona y traduce esa información en una de cuatro rutas de cuidado: promoción, prevención, intervención o riesgo.
           </Text>
           <Text style={styles.paragraph}>
-            Al final, si quieres, podrás contar con tus propias palabras qué situación ha influido en cómo te has sentido.
+            El resultado no constituye un diagnóstico. Su propósito es entregar una primera orientación, clara, masiva y accionable, para apoyar a estudiantes, familias, equipos profesionales y comunidades educativas.
           </Text>
-          
-          <View style={styles.warningBox}>
-            <Feather name="info" size={20} color="#78350f" style={styles.warningIcon} />
-            <Text style={styles.warningText}>
-              Esta experiencia es orientativa. No entrega un diagnóstico ni reemplaza una conversación con un profesional.
-            </Text>
-          </View>
         </View>
 
         <TouchableOpacity style={styles.button} onPress={handleStart} activeOpacity={0.8}>
-          <Text style={styles.buttonText}>Comenzar</Text>
+          <Text style={styles.buttonText}>Comenzar experiencia</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -107,36 +91,6 @@ const styles = StyleSheet.create({
     color: '#333',
     lineHeight: 24,
     marginBottom: 16,
-  },
-  optionsList: {
-    marginBottom: 16,
-    paddingLeft: 8,
-  },
-  bulletItem: {
-    fontSize: 16,
-    color: '#000',
-    fontWeight: '700',
-    lineHeight: 28,
-  },
-  warningBox: {
-    flexDirection: 'row',
-    backgroundColor: '#fff8e1',
-    padding: 16,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#f59e0b',
-    marginTop: 8,
-  },
-  warningIcon: {
-    marginRight: 12,
-    marginTop: 2,
-  },
-  warningText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#78350f',
-    lineHeight: 20,
-    fontWeight: '500',
   },
   button: {
     backgroundColor: '#000',

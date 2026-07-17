@@ -26,7 +26,7 @@ type Props = {
 type ResponseMode = 'audio' | 'text' | 'none' | null;
 
 export default function MentalHealthFinalScreen({ navigation, route }: Props) {
-  const { answers } = route.params;
+  const { target, answers } = route.params;
   const { user } = useAuth();
   
   const [responseMode, setResponseMode] = useState<ResponseMode>(null);
@@ -61,6 +61,7 @@ export default function MentalHealthFinalScreen({ navigation, route }: Props) {
         email: user?.email || '',
         nickname: user?.nickname || '',
         uuid: user?.uuid || '',
+        target,
         answers,
         textResponse: responseMode === 'text' ? textResponse : '',
         audioUri: responseMode === 'audio' && currentAudioUri ? {
@@ -131,7 +132,9 @@ export default function MentalHealthFinalScreen({ navigation, route }: Props) {
         <View style={styles.header}>
           <Text style={styles.questionNumber}>Pregunta Final</Text>
           <Text style={styles.title}>
-            Antes de terminar, y solo si quieres, cuéntame con tus propias palabras qué situación ha influido más en cómo te has sentido durante estas últimas dos semanas y qué crees que podría ayudarte.
+            {target === 'escolar'
+              ? 'Antes de terminar, y solo si quieres, cuéntame con tus propias palabras qué situación ha influido más en cómo te has sentido durante estas últimas dos semanas y qué crees que podría ayudarte.'
+              : 'Antes de terminar, y solo si quieres, cuéntame con tus propias palabras qué situación ha influido más en cómo te has sentido durante estas últimas dos semanas y qué tipo de apoyo crees que podría serte útil.'}
           </Text>
         </View>
 

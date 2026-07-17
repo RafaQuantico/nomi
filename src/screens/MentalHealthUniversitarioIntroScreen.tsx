@@ -12,12 +12,12 @@ import { RootStackParamList } from '../../App';
 import { Feather } from '@expo/vector-icons';
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'MentalHealthEscolarIntro'>;
+  navigation: NativeStackNavigationProp<RootStackParamList, 'MentalHealthUniversitarioIntro'>;
 };
 
-export default function MentalHealthEscolarIntroScreen({ navigation }: Props) {
+export default function MentalHealthUniversitarioIntroScreen({ navigation }: Props) {
   function handleStart() {
-    navigation.navigate('MentalHealthQuestion', { target: 'escolar' });
+    navigation.navigate('MentalHealthQuestion', { target: 'universitario' });
   }
 
   return (
@@ -33,10 +33,13 @@ export default function MentalHealthEscolarIntroScreen({ navigation }: Props) {
 
         <View style={styles.card}>
           <Text style={styles.paragraph}>
-            Hola. Esta es una experiencia breve para conocer cómo te has sentido durante las últimas dos semanas. Te haré seis preguntas.
+            Hola. Esta es una experiencia breve para explorar cómo te has sentido durante las últimas dos semanas.
           </Text>
           <Text style={styles.paragraph}>
-            En cada una, responde con qué frecuencia te pasó lo que describo. Puedes responder:
+            Te haré seis preguntas. En cada una, responde con qué frecuencia te ocurrió lo que describo.
+          </Text>
+          <Text style={styles.paragraph}>
+            Puedes responder:
           </Text>
           <View style={styles.optionsList}>
             <Text style={styles.bulletItem}>• "Nunca."</Text>
@@ -45,16 +48,16 @@ export default function MentalHealthEscolarIntroScreen({ navigation }: Props) {
             <Text style={styles.bulletItem}>• "Casi todos los días."</Text>
           </View>
           <Text style={styles.paragraph}>
-            No hay respuestas correctas o incorrectas.
+            No hay respuestas equivocadas.
           </Text>
           <Text style={styles.paragraph}>
-            Al final, si quieres, podrás contar con tus propias palabras qué situación ha influido en cómo te has sentido.
+            Al final, si quieres, podrás explicar con tus propias palabras qué situaciones han influido en tus respuestas.
           </Text>
           
           <View style={styles.warningBox}>
             <Feather name="info" size={20} color="#78350f" style={styles.warningIcon} />
             <Text style={styles.warningText}>
-              Esta experiencia es orientativa. No entrega un diagnóstico ni reemplaza una conversación con un profesional.
+              Esta experiencia es orientativa. No constituye un diagnóstico ni reemplaza la evaluación de un profesional.
             </Text>
           </View>
         </View>

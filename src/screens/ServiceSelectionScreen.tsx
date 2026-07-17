@@ -49,7 +49,7 @@ export default function ServiceSelectionScreen({ navigation }: Props) {
       }
       navigation.navigate('EmailConfirmation');
     } else if (serviceId === 'mental') {
-      navigation.navigate('MentalHealthTarget');
+      navigation.navigate('MentalHealthPresentation');
     }
   }
 

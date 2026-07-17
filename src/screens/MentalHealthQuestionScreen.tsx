@@ -8,20 +8,31 @@ import {
   ScrollView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../App';
 import { Feather } from '@expo/vector-icons';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'MentalHealthQuestion'>;
+  route: RouteProp<RootStackParamList, 'MentalHealthQuestion'>;
 };
 
-const QUESTIONS = [
+const QUESTIONS_ESCOLAR = [
   "Durante las últimas dos semanas, ¿con qué frecuencia has tenido pocas ganas o poco interés en hacer las cosas que normalmente disfrutas?",
   "Durante las últimas dos semanas, ¿con qué frecuencia te has sentido triste, desanimado o pensando que las cosas no van a mejorar?",
   "Durante las últimas dos semanas, ¿con qué frecuencia te has sentido nervioso, preocupado o muy tenso?",
   "Durante las últimas dos semanas, ¿con qué frecuencia te ha costado dejar de preocuparte o sacar una preocupación de tu cabeza?",
   "Durante las últimas dos semanas, ¿con qué frecuencia has sentido que las exigencias del colegio, de tu casa o de tu vida diaria eran demasiado para ti?",
   "Durante las últimas dos semanas, ¿con qué frecuencia te ha costado relajarte o sentirte tranquilo, incluso cuando tenías la oportunidad?"
+];
+
+const QUESTIONS_UNIVERSITARIO = [
+  "Durante las últimas dos semanas, ¿con qué frecuencia has tenido poco interés o placer en hacer las cosas?",
+  "Durante las últimas dos semanas, ¿con qué frecuencia te has sentido desanimado, deprimido o sin esperanza?",
+  "Durante las últimas dos semanas, ¿con qué frecuencia te has sentido nervioso, ansioso o muy tenso?",
+  "Durante las últimas dos semanas, ¿con qué frecuencia te ha costado dejar de preocuparte o controlar tus preocupaciones?",
+  "Durante las últimas dos semanas, ¿con qué frecuencia has sentido que las exigencias del estudio, el trabajo o tu vida cotidiana te sobrepasaban?",
+  "Durante las últimas dos semanas, ¿con qué frecuencia te ha costado relajarte, incluso cuando tenías la oportunidad?"
 ];
 
 const ALTERNATIVAS = [
@@ -31,7 +42,9 @@ const ALTERNATIVAS = [
   "Casi todos los días"
 ];
 
-export default function MentalHealthQuestionScreen({ navigation }: Props) {
+export default function MentalHealthQuestionScreen({ navigation, route }: Props) {
+  const { target } = route.params;
+  const questionsList = target === 'escolar' ? QUESTIONS_ESCOLAR : QUESTIONS_UNIVERSITARIO;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [answers, setAnswers] = useState<string[]>([]);
@@ -42,12 +55,12 @@ export default function MentalHealthQuestionScreen({ navigation }: Props) {
     const newAnswers = [...answers, selectedOption];
     setAnswers(newAnswers);
 
-    if (currentIndex < QUESTIONS.length - 1) {
+    if (currentIndex < questionsList.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setSelectedOption(null); // Resetear selección para la nueva pregunta
     } else {
       console.log('Test completado. Pasando a pantalla final con:', newAnswers);
-      navigation.navigate('MentalHealthFinal', { answers: newAnswers });
+      navigation.navigate('MentalHealthFinal', { target, answers: newAnswers });
     }
   }
 
@@ -60,7 +73,7 @@ export default function MentalHealthQuestionScreen({ navigation }: Props) {
 
         <View style={styles.header}>
           <Text style={styles.questionNumber}>Pregunta {currentIndex + 1} de 6</Text>
-          <Text style={styles.title}>{QUESTIONS[currentIndex]}</Text>
+          <Text style={styles.title}>{questionsList[currentIndex]}</Text>
         </View>
 
         <View style={styles.optionsContainer}>
