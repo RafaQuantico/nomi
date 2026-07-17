@@ -2,7 +2,11 @@ import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
 // Proxy en Vercel — evita CORS al llamar a Google Apps Script
-const APPS_SCRIPT_URL = '/api/webhook';
+// En desarrollo local, usamos la URL directa de Apps Script con 'no-cors'
+const isDev = process.env.NODE_ENV === 'development';
+const APPS_SCRIPT_URL = isDev
+  ? 'https://script.google.com/macros/s/AKfycbzuckGDrAO4FXJvhTS08XbYDQyGmiVS-masTb7Ov3lHu8sDZpOV8_vpudET0b7NXkZe/exec'
+  : '/api/webhook';
 
 export interface WelcomeEmailPayload {
   email: string;
@@ -25,11 +29,22 @@ export interface TestCompletedPayload {
   audioUris: AudioPayload[];
 }
 
+export interface MentalHealthCompletedPayload {
+  email: string;
+  nickname: string;
+  uuid: string;
+  answers: string[];
+  textResponse: string;
+  audioUri?: AudioPayload;
+  completedAt: string;
+}
+
 export async function sendWelcomeEmail(payload: WelcomeEmailPayload): Promise<void> {
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      mode: isDev ? 'no-cors' : 'cors',
+      headers: { 'Content-Type': isDev ? 'text/plain' : 'application/json' },
       body: JSON.stringify({ action: 'welcome_email', ...payload }),
     });
   } catch (error) {
@@ -64,7 +79,7 @@ export async function sendTestCompletedWebhook(payload: TestCompletedPayload): P
             base64 = await blobToBase64(blob);
           } else {
             base64 = await FileSystem.readAsStringAsync(audio.uri, {
-              encoding: FileSystem.EncodingType.Base64,
+              encoding: 'base64',
             });
           }
           return { label: audio.label, base64, mimeType: audio.mimeType };
@@ -76,7 +91,8 @@ export async function sendTestCompletedWebhook(payload: TestCompletedPayload): P
 
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      mode: isDev ? 'no-cors' : 'cors',
+      headers: { 'Content-Type': isDev ? 'text/plain' : 'application/json' },
       body: JSON.stringify({
         action: 'test_completed',
         email: payload.email,
@@ -89,5 +105,72 @@ export async function sendTestCompletedWebhook(payload: TestCompletedPayload): P
     });
   } catch (error) {
     console.warn('Error sending test completed:', error);
+  }
+}
+
+export async function sendMentalHealthCompletedWebhook(payload: MentalHealthCompletedPayload): Promise<void> {
+  try {
+    let base64 = '';
+    
+    if (payload.audioUri) {
+      if (Platform.OS === 'web') {
+        const response = await fetch(payload.audioUri.uri);
+        const blob = await response.blob();
+        base64 = await blobToBase64(blob);
+      } else {
+        base64 = await FileSystem.readAsStringAsync(payload.audioUri.uri, {
+          encoding: 'base64',
+        });
+      }
+    }
+
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: isDev ? 'no-cors' : 'cors',
+      headers: { 'Content-Type': isDev ? 'text/plain' : 'application/json' },
+      body: JSON.stringify({
+        action: 'mental_health_completed',
+        email: payload.email,
+        nickname: payload.nickname,
+        uuid: payload.uuid,
+        answers: payload.answers,
+        textResponse: payload.textResponse,
+        audio: base64 ? {
+          base64,
+          mimeType: payload.audioUri?.mimeType,
+          label: payload.audioUri?.label
+        } : null,
+        completedAt: payload.completedAt,
+      }),
+    });
+
+    if (isDev && response.type === 'opaque') {
+      // En modo local no-cors, la respuesta es opaca. Asumimos éxito si no lanzó excepción el fetch.
+      return;
+    }
+
+    const responseText = await response.text();
+    if (!response.ok) {
+      console.error('Webhook error response:', responseText);
+      throw new Error(`Error del servidor: ${response.status}`);
+    }
+    
+    // Opcional: verificar si Google Apps script devolvió error en JSON
+    try {
+      const json = JSON.parse(responseText);
+      if (json.status === 'error' || json.ok === false) {
+        console.error('Google Apps Script devolvió error:', json.error || 'Acción desconocida');
+        throw new Error(`Error de Apps Script: ${json.error || 'Acción desconocida'}`);
+      }
+    } catch (e) {
+      if (e instanceof Error && e.message.includes('Error de Apps Script')) {
+        throw e;
+      }
+      // no es JSON o no hay error, está bien
+    }
+    
+  } catch (error) {
+    console.error('Error sending mental health completed:', error);
+    throw error;
   }
 }

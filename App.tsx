@@ -12,6 +12,10 @@ import EmailConfirmationScreen from './src/screens/EmailConfirmationScreen';
 import TestSetupScreen from './src/screens/TestSetupScreen';
 import TestSequenceScreen from './src/screens/TestSequenceScreen';
 import MentalHealthTargetScreen from './src/screens/MentalHealthTargetScreen';
+import MentalHealthEscolarIntroScreen from './src/screens/MentalHealthEscolarIntroScreen';
+import MentalHealthQuestionScreen from './src/screens/MentalHealthQuestionScreen';
+import MentalHealthFinalScreen from './src/screens/MentalHealthFinalScreen';
+import MentalHealthSuccessScreen from './src/screens/MentalHealthSuccessScreen';
 
 export type RootStackParamList = {
   Intro: undefined;
@@ -21,6 +25,10 @@ export type RootStackParamList = {
   TestSetup: undefined;
   TestSequence: { eventPhase: 'activo' | 'cansado' };
   MentalHealthTarget: undefined;
+  MentalHealthEscolarIntro: undefined;
+  MentalHealthQuestion: undefined;
+  MentalHealthFinal: { answers: string[] };
+  MentalHealthSuccess: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -58,6 +66,10 @@ function AppNavigator() {
       <Stack.Screen name="TestSetup" component={TestSetupScreen} />
       <Stack.Screen name="TestSequence" component={TestSequenceScreen} />
       <Stack.Screen name="MentalHealthTarget" component={MentalHealthTargetScreen} />
+      <Stack.Screen name="MentalHealthEscolarIntro" component={MentalHealthEscolarIntroScreen} />
+      <Stack.Screen name="MentalHealthQuestion" component={MentalHealthQuestionScreen} />
+      <Stack.Screen name="MentalHealthFinal" component={MentalHealthFinalScreen} />
+      <Stack.Screen name="MentalHealthSuccess" component={MentalHealthSuccessScreen} />
     </Stack.Navigator>
   );
 }

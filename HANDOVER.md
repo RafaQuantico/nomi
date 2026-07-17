@@ -49,6 +49,14 @@ El proyecto web se debe desplegar a Vercel importando el repositorio de GitHub (
 ### Versión Móvil
 Se compila a través de EAS (Expo Application Services) usando los comandos estándar `eas build -p android` o `eas build -p ios`.
 
+## Actualizaciones Recientes (Módulo de Salud Mental)
+
+- **Flujo de Salud Mental:** Se integró un cuestionario de 6 preguntas más una respuesta final (audio o texto). Incluye las pantallas `MentalHealthQuestionsScreen`, `MentalHealthFinalScreen` y `MentalHealthSuccessScreen`.
+- **Backend (Google Apps Script):** Se implementó el endpoint `handleMentalHealthCompleted` que almacena datos en Google Sheets, guarda audios en Google Drive, y envía un correo confirmatorio con formato HTML usando `GmailApp`.
+- **Proxy Vercel:** Para desarrollo local, `webhookService.ts` enruta hacia la URL productiva de Vercel (`https://nomi-app-web.vercel.app/api/webhook`) para evitar fallos por rutas no encontradas y CORS.
+- **UI:** Se incluyó un visualizador de frecuencias animado reactivo a la voz en la pantalla de respuesta libre de salud mental.
+- **Estado de Transcripción:** En la iteración actual **NO se realiza transcripción automática (Speech-to-Text)**. Todos los audios (Fatiga y Salud Mental) se suben directamente a Google Drive como `.webm` o `.m4a` y el link se almacena en la planilla. Se deja pendiente para futuras implementaciones.
+
 ---
 
 > **Nota para el Agente / Asistente de IA:** 

@@ -16,6 +16,7 @@ interface UseAudioRecorderProps {
   onPartialTranscript?: (text: string) => void;
   onResponse?: (text: string) => void;
   onStatus?: (text: string) => void;
+  disableWebsocket?: boolean;
 }
 
 export function useAudioRecorder({
@@ -26,6 +27,7 @@ export function useAudioRecorder({
   onPartialTranscript,
   onResponse,
   onStatus,
+  disableWebsocket,
 }: UseAudioRecorderProps) {
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [metering, setMetering] = useState(0);
@@ -50,39 +52,42 @@ export function useAudioRecorder({
         webMediaRecorderRef.current = fileMediaRecorder;
         webChunksRef.current = [];
 
-        // Recorder 2: Para el WebSocket (con timeslice)
-        const wsMediaRecorder = new MediaRecorder(stream);
-        webWsMediaRecorderRef.current = wsMediaRecorder;
+        // Recorder 2: Para el WebSocket (con timeslice) - solo si no está deshabilitado
+        let wsMediaRecorder: MediaRecorder | null = null;
+        if (!disableWebsocket) {
+          wsMediaRecorder = new MediaRecorder(stream);
+          webWsMediaRecorderRef.current = wsMediaRecorder;
 
-        const ws = new WebSocket(WS_URL);
-        socketRef.current = ws;
-        ws.binaryType = 'arraybuffer';
+          const ws = new WebSocket(WS_URL);
+          socketRef.current = ws;
+          ws.binaryType = 'arraybuffer';
 
-        ws.addEventListener('open', () => {
-          ws.send(JSON.stringify({ type: 'auth', uuid, passkey, eventPhase }));
-        });
+          ws.addEventListener('open', () => {
+            ws.send(JSON.stringify({ type: 'auth', uuid, passkey, eventPhase }));
+          });
 
-        ws.addEventListener('message', (event) => {
-          if (typeof event.data !== 'string') return;
-          try {
-            const data = JSON.parse(event.data);
-            if (data.type === 'status') onStatus?.(data.message);
-            else if (data.type === 'partial_transcript') onPartialTranscript?.(data.text + '...');
-            else if (data.type === 'transcript') onTranscript?.(data.text);
-            else if (data.type === 'response') onResponse?.(data.text);
-            else if (data.type === 'auth_error') {
-              onStatus?.(data.message);
-              stopRecording();
+          ws.addEventListener('message', (event) => {
+            if (typeof event.data !== 'string') return;
+            try {
+              const data = JSON.parse(event.data);
+              if (data.type === 'status') onStatus?.(data.message);
+              else if (data.type === 'partial_transcript') onPartialTranscript?.(data.text + '...');
+              else if (data.type === 'transcript') onTranscript?.(data.text);
+              else if (data.type === 'response') onResponse?.(data.text);
+              else if (data.type === 'auth_error') {
+                onStatus?.(data.message);
+                stopRecording();
+              }
+            } catch { /* silenciar errores JSON */ }
+          });
+
+          // Enviar chunks al WebSocket en tiempo real
+          wsMediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0 && socketRef.current?.readyState === WebSocket.OPEN) {
+              socketRef.current.send(e.data); // Enviar blob directo es más eficiente
             }
-          } catch { /* silenciar errores JSON */ }
-        });
-
-        // Enviar chunks al WebSocket en tiempo real
-        wsMediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0 && socketRef.current?.readyState === WebSocket.OPEN) {
-            socketRef.current.send(e.data); // Enviar blob directo es más eficiente
-          }
-        };
+          };
+        }
 
         // Guardar el archivo final intacto
         fileMediaRecorder.ondataavailable = (e) => {
@@ -96,7 +101,9 @@ export function useAudioRecorder({
           setMetering(Math.random() * 0.5 + 0.5); 
         }, 100);
 
-        wsMediaRecorder.start(CHUNK_INTERVAL_MS);
+        if (wsMediaRecorder) {
+          wsMediaRecorder.start(CHUNK_INTERVAL_MS);
+        }
         fileMediaRecorder.start(); // sin timeslice!
         
         setRecordingState('recording');
@@ -134,28 +141,30 @@ export function useAudioRecorder({
       setRecordingState('recording');
       onStatus?.('Escuchando... habla ahora.');
 
-      const ws = new WebSocket(WS_URL);
-      socketRef.current = ws;
-      ws.binaryType = 'arraybuffer';
+      if (!disableWebsocket) {
+        const ws = new WebSocket(WS_URL);
+        socketRef.current = ws;
+        ws.binaryType = 'arraybuffer';
 
-      ws.addEventListener('open', () => {
-        ws.send(JSON.stringify({ type: 'auth', uuid, passkey, eventPhase }));
-      });
+        ws.addEventListener('open', () => {
+          ws.send(JSON.stringify({ type: 'auth', uuid, passkey, eventPhase }));
+        });
 
-      ws.addEventListener('message', (event) => {
-        if (typeof event.data !== 'string') return;
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'status') onStatus?.(data.message);
-          else if (data.type === 'partial_transcript') onPartialTranscript?.(data.text + '...');
-          else if (data.type === 'transcript') onTranscript?.(data.text);
-          else if (data.type === 'response') onResponse?.(data.text);
-          else if (data.type === 'auth_error') {
-            onStatus?.(data.message);
-            stopRecording();
-          }
-        } catch { /* silenciar errores JSON */ }
-      });
+        ws.addEventListener('message', (event) => {
+          if (typeof event.data !== 'string') return;
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'status') onStatus?.(data.message);
+            else if (data.type === 'partial_transcript') onPartialTranscript?.(data.text + '...');
+            else if (data.type === 'transcript') onTranscript?.(data.text);
+            else if (data.type === 'response') onResponse?.(data.text);
+            else if (data.type === 'auth_error') {
+              onStatus?.(data.message);
+              stopRecording();
+            }
+          } catch { /* silenciar errores JSON */ }
+        });
+      }
 
       chunkIntervalRef.current = setInterval(async () => {
         if (!recordingRef.current) return;
@@ -169,14 +178,14 @@ export function useAudioRecorder({
           if (currentSize <= lastFileSizeRef.current) return;
 
           const chunk = await FileSystem.readAsStringAsync(uri, {
-            encoding: FileSystem.EncodingType.Base64,
+            encoding: 'base64',
             position: lastFileSizeRef.current,
             length: currentSize - lastFileSizeRef.current,
           });
 
           lastFileSizeRef.current = currentSize;
 
-          if (socketRef.current?.readyState === WebSocket.OPEN) {
+          if (socketRef.current?.readyState === WebSocket.OPEN && !disableWebsocket) {
             const binaryString = atob(chunk);
             const bytes = new Uint8Array(binaryString.length);
             for (let i = 0; i < binaryString.length; i++) {
@@ -191,7 +200,7 @@ export function useAudioRecorder({
       onStatus?.(`Error al iniciar grabación: ${error.message}`);
       setRecordingState('idle');
     }
-  }, [uuid, passkey, eventPhase]);
+  }, [uuid, passkey, eventPhase, disableWebsocket]);
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
     if (chunkIntervalRef.current) {
