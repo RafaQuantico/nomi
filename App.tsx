@@ -22,6 +22,7 @@ import MentalHealthSuccessScreen from './src/screens/MentalHealthSuccessScreen';
 import DashboardAuthScreen from './src/screens/DashboardAuthScreen';
 import DashboardWelcomeScreen from './src/screens/DashboardWelcomeScreen';
 import DashboardInteractiveScreen from './src/screens/DashboardInteractiveScreen';
+import MentalHealthDataScreen from './src/screens/MentalHealthDataScreen';
 
 export type RootStackParamList = {
   Intro: undefined;
@@ -35,8 +36,9 @@ export type RootStackParamList = {
   MentalHealthMockupDisclaimer: { target: 'escolar' | 'universitario' };
   MentalHealthEscolarIntro: undefined;
   MentalHealthUniversitarioIntro: undefined;
-  MentalHealthQuestion: { target: 'escolar' | 'universitario' };
-  MentalHealthFinal: { target: 'escolar' | 'universitario'; answers: string[] };
+  MentalHealthData: { target: 'escolar' | 'universitario' };
+  MentalHealthQuestion: { target: 'escolar' | 'universitario'; initialAudioUri?: string };
+  MentalHealthFinal: { target: 'escolar' | 'universitario'; answers: string[]; initialAudioUri?: string };
   MentalHealthSuccess: undefined;
   DashboardAuth: undefined;
   DashboardWelcome: { auth?: string; authenticated?: boolean };
@@ -86,6 +88,7 @@ function AppNavigator() {
       <Stack.Screen name="MentalHealthMockupDisclaimer" component={MentalHealthMockupDisclaimerScreen} />
       <Stack.Screen name="MentalHealthEscolarIntro" component={MentalHealthEscolarIntroScreen} />
       <Stack.Screen name="MentalHealthUniversitarioIntro" component={MentalHealthUniversitarioIntroScreen} />
+      <Stack.Screen name="MentalHealthData" component={MentalHealthDataScreen} />
       <Stack.Screen name="MentalHealthQuestion" component={MentalHealthQuestionScreen} />
       <Stack.Screen name="MentalHealthFinal" component={MentalHealthFinalScreen} />
       <Stack.Screen name="MentalHealthSuccess" component={MentalHealthSuccessScreen} />

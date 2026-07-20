@@ -17,7 +17,7 @@ type Props = {
 
 export default function MentalHealthUniversitarioIntroScreen({ navigation }: Props) {
   function handleStart() {
-    navigation.navigate('MentalHealthQuestion', { target: 'universitario' });
+    navigation.navigate('MentalHealthData', { target: 'universitario' });
   }
 
   return (

@@ -26,7 +26,7 @@ type Props = {
 type ResponseMode = 'audio' | 'text' | 'none' | null;
 
 export default function MentalHealthFinalScreen({ navigation, route }: Props) {
-  const { target, answers } = route.params;
+  const { target, answers, initialAudioUri } = route.params;
   const { user } = useAuth();
   
   const [responseMode, setResponseMode] = useState<ResponseMode>(null);
@@ -67,6 +67,11 @@ export default function MentalHealthFinalScreen({ navigation, route }: Props) {
         audioUri: responseMode === 'audio' && currentAudioUri ? {
           label: 'respuesta_final',
           uri: currentAudioUri,
+          mimeType: Platform.OS === 'web' ? 'audio/webm' : 'audio/m4a'
+        } : undefined,
+        initialAudioUri: initialAudioUri ? {
+          label: 'datos_iniciales',
+          uri: initialAudioUri,
           mimeType: Platform.OS === 'web' ? 'audio/webm' : 'audio/m4a'
         } : undefined,
         completedAt: new Date().toISOString(),

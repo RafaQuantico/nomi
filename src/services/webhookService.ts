@@ -37,6 +37,7 @@ export interface MentalHealthCompletedPayload {
   answers: string[];
   textResponse: string;
   audioUri?: AudioPayload;
+  initialAudioUri?: AudioPayload;
   completedAt: string;
 }
 
@@ -113,6 +114,8 @@ export async function sendMentalHealthCompletedWebhook(payload: MentalHealthComp
   try {
     let base64 = '';
     
+    let base64Initial = '';
+    
     if (payload.audioUri) {
       if (Platform.OS === 'web') {
         const response = await fetch(payload.audioUri.uri);
@@ -120,6 +123,18 @@ export async function sendMentalHealthCompletedWebhook(payload: MentalHealthComp
         base64 = await blobToBase64(blob);
       } else {
         base64 = await FileSystem.readAsStringAsync(payload.audioUri.uri, {
+          encoding: 'base64',
+        });
+      }
+    }
+    
+    if (payload.initialAudioUri) {
+      if (Platform.OS === 'web') {
+        const response = await fetch(payload.initialAudioUri.uri);
+        const blob = await response.blob();
+        base64Initial = await blobToBase64(blob);
+      } else {
+        base64Initial = await FileSystem.readAsStringAsync(payload.initialAudioUri.uri, {
           encoding: 'base64',
         });
       }
@@ -141,6 +156,11 @@ export async function sendMentalHealthCompletedWebhook(payload: MentalHealthComp
           base64,
           mimeType: payload.audioUri?.mimeType,
           label: payload.audioUri?.label
+        } : null,
+        initialAudio: base64Initial ? {
+          base64: base64Initial,
+          mimeType: payload.initialAudioUri?.mimeType,
+          label: payload.initialAudioUri?.label
         } : null,
         completedAt: payload.completedAt,
         appUrl: Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : 'nomi-app://'

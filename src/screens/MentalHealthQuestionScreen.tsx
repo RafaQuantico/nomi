@@ -43,7 +43,7 @@ const ALTERNATIVAS = [
 ];
 
 export default function MentalHealthQuestionScreen({ navigation, route }: Props) {
-  const { target } = route.params;
+  const { target, initialAudioUri } = route.params;
   const questionsList = target === 'escolar' ? QUESTIONS_ESCOLAR : QUESTIONS_UNIVERSITARIO;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -60,7 +60,7 @@ export default function MentalHealthQuestionScreen({ navigation, route }: Props)
       setSelectedOption(null); // Resetear selección para la nueva pregunta
     } else {
       console.log('Test completado. Pasando a pantalla final con:', newAnswers);
-      navigation.navigate('MentalHealthFinal', { target, answers: newAnswers });
+      navigation.navigate('MentalHealthFinal', { target, answers: newAnswers, initialAudioUri });
     }
   }
 
