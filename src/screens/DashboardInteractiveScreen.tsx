@@ -11,6 +11,11 @@ export default function DashboardInteractiveScreen() {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'todos' | 'escolar' | 'universitario'>('todos');
 
+  const [selectedSexo, setSelectedSexo] = useState('Todos');
+  const [selectedEdad, setSelectedEdad] = useState('Todos');
+  const [selectedCurso, setSelectedCurso] = useState('Todos');
+  const [selectedComuna, setSelectedComuna] = useState('Todos');
+
   useEffect(() => {
     loadData();
   }, []);
@@ -36,11 +41,48 @@ export default function DashboardInteractiveScreen() {
     }
   };
 
+  // Extraer opciones únicas
+  const uniqueOptions = useMemo(() => {
+    const opts = {
+      sexo: new Set<string>(),
+      edad: new Set<string>(),
+      curso: new Set<string>(),
+      comuna: new Set<string>()
+    };
+    data.forEach(d => {
+      if (d.sexo) opts.sexo.add(String(d.sexo).trim());
+      if (d.edad) opts.edad.add(String(d.edad).trim());
+      if (d.curso) opts.curso.add(String(d.curso).trim());
+      if (d.comuna) opts.comuna.add(String(d.comuna).trim());
+    });
+    return {
+      sexo: ['Todos', ...Array.from(opts.sexo).filter(Boolean).sort()],
+      edad: ['Todos', ...Array.from(opts.edad).filter(Boolean).sort()],
+      curso: ['Todos', ...Array.from(opts.curso).filter(Boolean).sort()],
+      comuna: ['Todos', ...Array.from(opts.comuna).filter(Boolean).sort()],
+    };
+  }, [data]);
+
   // 1. Filtrar datos
   const filteredData = useMemo(() => {
-    if (filter === 'todos') return data;
-    return data.filter(item => item.target === filter);
-  }, [data, filter]);
+    let result = data;
+    if (filter !== 'todos') {
+      result = result.filter(item => item.target === filter);
+    }
+    if (selectedSexo !== 'Todos') {
+      result = result.filter(item => String(item.sexo || '').trim() === selectedSexo);
+    }
+    if (selectedEdad !== 'Todos') {
+      result = result.filter(item => String(item.edad || '').trim() === selectedEdad);
+    }
+    if (selectedCurso !== 'Todos') {
+      result = result.filter(item => String(item.curso || '').trim() === selectedCurso);
+    }
+    if (selectedComuna !== 'Todos') {
+      result = result.filter(item => String(item.comuna || '').trim() === selectedComuna);
+    }
+    return result;
+  }, [data, filter, selectedSexo, selectedEdad, selectedCurso, selectedComuna]);
 
   // 2. Calcular métricas principales
   const totalTests = data.length;
@@ -82,32 +124,6 @@ export default function DashboardInteractiveScreen() {
     }));
   }, [filteredData, currentTotal]);
 
-  // 4. Analizar palabras frecuentes
-  const frequentWords = useMemo(() => {
-    const stopwords = ['de','la','que','el','en','y','a','los','se','del','las','un','por','con','no','una','su','para','es','al','lo','como','más','pero','sus','le','ya','o','porque','cuando','muy','sin','sobre','también','me','hasta','hay','donde','quien','desde','todo','nos','durante','todos','uno','les','ni','contra','otros','ese','eso','ante','ellos','e','esto','mí','antes','algunos','qué','unos','yo','otro','otras','otra','él','tanto','esa','estos','mucho','quienes','nada','muchos','cual','poco','ella','estar','estas','algunas','algo','nosotros','mi','mis','tú','te','ti','tu','tus','ellas','nosotras','vosotros','vosotras','os','mío','mía','míos','mías','tuyo','tuya','tuyos','tuyas','suyo','suya','suyos','suyas','nuestro','nuestra','nuestros','nuestras','vuestro','vuestra','vuestros','vuestras','esos','esas','este','esta','estos','estas','aquel','aquella','aquellos','aquellas','cual','cuales','quien','quienes','que'];
-    
-    const wordCounts: Record<string, number> = {};
-    
-    filteredData.forEach(item => {
-      if (item.textResponse) {
-        const rawWords = item.textResponse.toLowerCase().split(/\s+/);
-        rawWords.forEach(w => {
-          // Ignorar URLs
-          if (w.startsWith('http') || w.startsWith('www')) return;
-          
-          const cleanWord = w.replace(/[^\wáéíóúüñ]/g, '');
-          if (cleanWord.length > 3 && !stopwords.includes(cleanWord)) {
-            wordCounts[cleanWord] = (wordCounts[cleanWord] || 0) + 1;
-          }
-        });
-      }
-    });
-
-    return Object.entries(wordCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
-  }, [filteredData]);
-
   if (loading) {
     return (
       <View style={styles.center}>
@@ -126,6 +142,26 @@ export default function DashboardInteractiveScreen() {
       </View>
     );
   }
+
+  // Render helper for dynamic filter rows
+  const renderFilterRow = (title: string, options: string[], selected: string, onSelect: (val: string) => void) => {
+    if (options.length <= 1) return null; // Only 'Todos' available
+    return (
+      <View style={styles.subFilterRow}>
+        <Text style={styles.subFilterTitle}>{title}:</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, alignItems: 'center' }}>
+          {options.map(opt => (
+            <TouchableOpacity 
+              key={opt} 
+              style={[styles.subFilterBtn, selected === opt && styles.subFilterBtnActive]}
+              onPress={() => onSelect(opt)}>
+              <Text style={[styles.subFilterText, selected === opt && styles.subFilterTextActive]}>{opt}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -166,6 +202,14 @@ export default function DashboardInteractiveScreen() {
             onPress={() => setFilter('universitario')}>
             <Text style={[styles.filterText, filter === 'universitario' && styles.filterTextActive]}>Universitarios</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* --- NUEVOS FILTROS DEMOGRÁFICOS --- */}
+        <View style={styles.demographicFiltersContainer}>
+          {renderFilterRow('Sexo', uniqueOptions.sexo, selectedSexo, setSelectedSexo)}
+          {renderFilterRow('Edad', uniqueOptions.edad, selectedEdad, setSelectedEdad)}
+          {renderFilterRow('Curso', uniqueOptions.curso, selectedCurso, setSelectedCurso)}
+          {renderFilterRow('Comuna', uniqueOptions.comuna, selectedComuna, setSelectedComuna)}
         </View>
 
         <View style={styles.section}>
@@ -247,4 +291,12 @@ const styles = StyleSheet.create({
   tagText: { fontSize: 14, fontWeight: '600', color: '#333', marginRight: 6 },
   tagBadge: { backgroundColor: '#000', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2 },
   tagBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
+
+  demographicFiltersContainer: { marginBottom: 32, gap: 12 },
+  subFilterRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 8, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
+  subFilterTitle: { fontSize: 13, fontWeight: '800', color: '#334155', minWidth: 60, marginRight: 8 },
+  subFilterBtn: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, backgroundColor: '#f1f5f9', marginRight: 8 },
+  subFilterBtnActive: { backgroundColor: '#3b82f6' },
+  subFilterText: { fontSize: 12, fontWeight: '600', color: '#64748b' },
+  subFilterTextActive: { color: '#fff' }
 });

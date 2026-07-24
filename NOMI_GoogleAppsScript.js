@@ -73,6 +73,12 @@ function doGet(e) {
       const responseCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('escrita'));
       const routeCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('ruta'));
       
+      // Nuevas columnas demográficas (tolerante a la posición)
+      const sexoCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('sexo'));
+      const edadCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('edad'));
+      const cursoCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('curso'));
+      const comunaCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('comuna'));
+      
       // Buscar columnas de preguntas P1 a P6
       const p1Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p1:'));
       const p2Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p2:'));
@@ -87,6 +93,10 @@ function doGet(e) {
           target: targetCol >= 0 ? (row[targetCol] || defaultTarget) : defaultTarget,
           textResponse: responseCol >= 0 ? (row[responseCol] || '') : '',
           route: routeCol >= 0 ? (row[routeCol] || 'Sin clasificar') : 'Sin clasificar',
+          sexo: sexoCol >= 0 ? (row[sexoCol] || '') : '',
+          edad: edadCol >= 0 ? (row[edadCol] || '') : '',
+          curso: cursoCol >= 0 ? (row[cursoCol] || '') : '',
+          comuna: comunaCol >= 0 ? (row[comunaCol] || '') : '',
           q1: p1Col >= 0 ? (row[p1Col] || '') : '',
           q2: p2Col >= 0 ? (row[p2Col] || '') : '',
           q3: p3Col >= 0 ? (row[p3Col] || '') : '',

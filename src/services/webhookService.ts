@@ -202,6 +202,10 @@ export interface DashboardData {
   target: string;
   route: string;
   textResponse: string;
+  sexo?: string;
+  edad?: string | number;
+  curso?: string;
+  comuna?: string;
   q1?: string | number;
   q2?: string | number;
   q3?: string | number;
