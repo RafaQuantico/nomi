@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, Animated, Dimensions, TouchableOpacity } from 'react-native';
 import { DashboardData } from '../services/webhookService';
 
 interface Props {
@@ -19,21 +19,21 @@ function getScore(answer?: string | number): number {
 
 export const TrendChart: React.FC<Props> = ({ data, threshold = 2 }) => {
   const animValue = useRef(new Animated.Value(0)).current;
+  const [groupBy, setGroupBy] = useState<'target'|'sexo'|'edad'|'curso'|'comuna'>('target');
 
   useEffect(() => {
     // Animar las barras de 0 a 1 en 1 segundo
+    animValue.setValue(0);
     Animated.timing(animValue, {
       toValue: 1,
       duration: 1000,
       useNativeDriver: false,
     }).start();
-  }, []);
+  }, [groupBy]);
 
   const stats = useMemo(() => {
     const groups: Record<string, { total: number, A: number, B: number, C: number }> = {
       'Total': { total: 0, A: 0, B: 0, C: 0 },
-      'Escolar': { total: 0, A: 0, B: 0, C: 0 },
-      'Universitario': { total: 0, A: 0, B: 0, C: 0 },
     };
 
     data.forEach(item => {
@@ -45,15 +45,22 @@ export const TrendChart: React.FC<Props> = ({ data, threshold = 2 }) => {
       const hasB = ansiedad >= threshold;
       const hasC = sobrecarga >= threshold;
 
-      const groupName = item.target.toLowerCase() === 'escolar' ? 'Escolar' : 
-                        item.target.toLowerCase() === 'universitario' ? 'Universitario' : null;
+      let groupName = (item.target || 'N/A').toString();
+      if (groupBy === 'sexo') groupName = String(item.sexo || 'N/A').trim() || 'N/A';
+      else if (groupBy === 'edad') groupName = String(item.edad || 'N/A').trim() || 'N/A';
+      else if (groupBy === 'curso') groupName = String(item.curso || 'N/A').trim() || 'N/A';
+      else if (groupBy === 'comuna') groupName = String(item.comuna || 'N/A').trim() || 'N/A';
+      
+      if (groupBy === 'target') groupName = groupName.charAt(0).toUpperCase() + groupName.slice(1).toLowerCase();
 
-      if (groupName) {
-        groups[groupName].total++;
-        if (hasA) groups[groupName].A++;
-        if (hasB) groups[groupName].B++;
-        if (hasC) groups[groupName].C++;
+      if (!groups[groupName]) {
+        groups[groupName] = { total: 0, A: 0, B: 0, C: 0 };
       }
+
+      groups[groupName].total++;
+      if (hasA) groups[groupName].A++;
+      if (hasB) groups[groupName].B++;
+      if (hasC) groups[groupName].C++;
 
       groups['Total'].total++;
       if (hasA) groups['Total'].A++;
@@ -61,57 +68,74 @@ export const TrendChart: React.FC<Props> = ({ data, threshold = 2 }) => {
       if (hasC) groups['Total'].C++;
     });
 
-    const results = [
-      {
-        label: 'Total',
-        pA: groups['Total'].total ? groups['Total'].A / groups['Total'].total : 0,
-        pB: groups['Total'].total ? groups['Total'].B / groups['Total'].total : 0,
-        pC: groups['Total'].total ? groups['Total'].C / groups['Total'].total : 0,
-      },
-      {
-        label: 'Escolar',
-        pA: groups['Escolar'].total ? groups['Escolar'].A / groups['Escolar'].total : 0,
-        pB: groups['Escolar'].total ? groups['Escolar'].B / groups['Escolar'].total : 0,
-        pC: groups['Escolar'].total ? groups['Escolar'].C / groups['Escolar'].total : 0,
-      },
-      {
-        label: 'Universitario',
-        pA: groups['Universitario'].total ? groups['Universitario'].A / groups['Universitario'].total : 0,
-        pB: groups['Universitario'].total ? groups['Universitario'].B / groups['Universitario'].total : 0,
-        pC: groups['Universitario'].total ? groups['Universitario'].C / groups['Universitario'].total : 0,
-      }
-    ];
+    const results = Object.keys(groups)
+      // Ordenar: Total primero, luego el resto alfabéticamente
+      .sort((a, b) => a === 'Total' ? -1 : b === 'Total' ? 1 : a.localeCompare(b))
+      .map(k => ({
+        label: k,
+        pA: groups[k].total ? groups[k].A / groups[k].total : 0,
+        pB: groups[k].total ? groups[k].B / groups[k].total : 0,
+        pC: groups[k].total ? groups[k].C / groups[k].total : 0,
+    }));
 
     // Calcular conclusiones automáticas
     let maxDiffText = "";
     let highlightTitle = "";
     let highlightSubtitle = "";
 
-    const escolarStress = results.find(r => r.label === 'Escolar')?.pC || 0;
-    const uniStress = results.find(r => r.label === 'Universitario')?.pC || 0;
+    // Simplemente buscamos el máximo de C (Estrés) excluyendo "Total" para hacer un comentario
+    const others = results.filter(r => r.label !== 'Total');
+    if (others.length > 1) {
+      const maxStressGroup = others.reduce((prev, current) => (prev.pC > current.pC) ? prev : current);
+      const minStressGroup = others.reduce((prev, current) => (prev.pC < current.pC) ? prev : current);
 
-    if (Math.abs(escolarStress - uniStress) > 0.05) {
-      const higher = escolarStress > uniStress ? 'escolares' : 'universitarios';
-      const maxVal = Math.max(escolarStress, uniStress);
-      const minVal = Math.min(escolarStress, uniStress);
-      highlightTitle = `${Math.round(minVal * 100)}% → ${Math.round(maxVal * 100)}%`;
-      highlightSubtitle = `El estrés es significativamente mayor en ${higher}.`;
-      maxDiffText = `Diferencia de +${Math.round((maxVal - minVal) * 100)} pp entre grupos en el nivel de estrés.`;
+      if (maxStressGroup.pC - minStressGroup.pC > 0.05) {
+        highlightTitle = `${Math.round(minStressGroup.pC * 100)}% → ${Math.round(maxStressGroup.pC * 100)}%`;
+        highlightSubtitle = `El estrés es significativamente mayor en el grupo "${maxStressGroup.label}".`;
+        maxDiffText = `Diferencia de +${Math.round((maxStressGroup.pC - minStressGroup.pC) * 100)} pp entre grupos en el nivel de estrés.`;
+      } else {
+        const totalAnxiety = results.find(r => r.label === 'Total')?.pB || 0;
+        highlightTitle = `${Math.round(totalAnxiety * 100)}%`;
+        highlightSubtitle = `Ansiedad global promedio en la muestra.`;
+        maxDiffText = "Los niveles se mantienen estables en los distintos subgrupos.";
+      }
     } else {
-      const totalAnxiety = results.find(r => r.label === 'Total')?.pB || 0;
-      highlightTitle = `${Math.round(totalAnxiety * 100)}%`;
-      highlightSubtitle = `Ansiedad global promedio en la muestra.`;
-      maxDiffText = "Los niveles se mantienen relativamente estables entre escolares y universitarios.";
+      highlightTitle = "—";
+      highlightSubtitle = "Sin datos suficientes";
+      maxDiffText = "";
     }
 
     return { results, highlightTitle, highlightSubtitle, maxDiffText };
-  }, [data, threshold]);
+  }, [data, threshold, groupBy]);
 
   const MAX_HEIGHT = 200; // altura maxima de la barra en px
 
   return (
     <View style={styles.container}>
       <Text style={styles.mainTitle}>Los indicadores varían por grupo; análisis automático</Text>
+
+      <View style={{flexDirection: 'row', justifyContent: 'center', marginBottom: 20, gap: 8, flexWrap: 'wrap'}}>
+        {[
+          { id: 'target', label: 'Público' },
+          { id: 'sexo', label: 'Sexo' },
+          { id: 'edad', label: 'Edad' },
+          { id: 'curso', label: 'Curso' },
+          { id: 'comuna', label: 'Comuna' }
+        ].map(opt => (
+          <TouchableOpacity 
+            key={opt.id}
+            onPress={() => setGroupBy(opt.id as any)} 
+            style={{
+              paddingVertical: 6, paddingHorizontal: 12, 
+              backgroundColor: groupBy === opt.id ? '#3b82f6' : '#f1f5f9', 
+              borderRadius: 20
+            }}>
+            <Text style={{fontWeight: '600', fontSize: 13, color: groupBy === opt.id ? '#fff' : '#475569'}}>
+              {opt.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
       
       <View style={styles.row}>
         {/* Gráfico de Barras */}

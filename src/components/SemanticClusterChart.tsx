@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Platform, Easing, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Animated, Platform, Easing, Dimensions, TouchableOpacity } from 'react-native';
 import { DashboardData } from '../services/webhookService';
 
 interface Props {
@@ -92,7 +92,10 @@ export const SemanticClusterChart: React.FC<Props> = ({ data, mode }) => {
     }
   }, [isInView, explosionAnim, fadeAnim]);
 
-  const { nodes, clusterStats, quotes, totalCount, centers } = useMemo(() => {
+  const [groupBy, setGroupBy] = useState<'target'|'sexo'|'edad'|'curso'|'comuna'>('target');
+  const GROUP_COLORS = ['#3b82f6', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#14b8a6', '#ef4444', '#f97316'];
+
+  const { nodes, clusterStats, quotes, totalCount, centers, uniqueGroups } = useMemo(() => {
     // Definir centros para cada cluster en un canvas de 400x400
     const centers: Record<string, { x: number, y: number }> = {
       'C1': { x: 300, y: 100 },
@@ -106,11 +109,12 @@ export const SemanticClusterChart: React.FC<Props> = ({ data, mode }) => {
 
     const stats: Record<string, number> = {};
     const clusterQuotes: Record<string, string> = {};
-    const targetStats: Record<string, { escolar: number, uni: number, total: number }> = {};
+    const groupStats: Record<string, Record<string, number>> = {};
+    const groupTotals: Record<string, number> = {};
 
     CLUSTERS.forEach(c => {
       stats[c.id] = 0;
-      targetStats[c.id] = { escolar: 0, uni: 0, total: 0 };
+      groupStats[c.id] = {};
     });
 
     const parsedNodes = data.map((item, index) => {
@@ -118,10 +122,16 @@ export const SemanticClusterChart: React.FC<Props> = ({ data, mode }) => {
       const cluster = assignCluster(text);
       stats[cluster.id]++;
       
-      const isEscolar = item.target.toLowerCase() === 'escolar';
-      targetStats[cluster.id].total++;
-      if (isEscolar) targetStats[cluster.id].escolar++;
-      else targetStats[cluster.id].uni++;
+      let groupName = (item.target || 'N/A').toString();
+      if (groupBy === 'sexo') groupName = String(item.sexo || 'N/A').trim() || 'N/A';
+      else if (groupBy === 'edad') groupName = String(item.edad || 'N/A').trim() || 'N/A';
+      else if (groupBy === 'curso') groupName = String(item.curso || 'N/A').trim() || 'N/A';
+      else if (groupBy === 'comuna') groupName = String(item.comuna || 'N/A').trim() || 'N/A';
+      
+      if (groupBy === 'target') groupName = groupName.charAt(0).toUpperCase() + groupName.slice(1).toLowerCase();
+
+      groupStats[cluster.id][groupName] = (groupStats[cluster.id][groupName] || 0) + 1;
+      groupTotals[groupName] = (groupTotals[groupName] || 0) + 1;
 
       if (text.length > 20 && !clusterQuotes[cluster.id] && rand() > 0.5) {
         clusterQuotes[cluster.id] = text;
@@ -139,7 +149,7 @@ export const SemanticClusterChart: React.FC<Props> = ({ data, mode }) => {
         x,
         y,
         cluster,
-        isEscolar
+        groupName
       };
     });
 
@@ -151,19 +161,20 @@ export const SemanticClusterChart: React.FC<Props> = ({ data, mode }) => {
       }
     });
 
+    const uniqueGroups = Object.keys(groupTotals).sort();
+
     // Ordenar stats por tamaño
     const sortedStats = Object.keys(stats)
       .map(id => ({
         cluster: CLUSTERS.find(c => c.id === id)!,
         count: stats[id],
-        escolar: targetStats[id].escolar,
-        uni: targetStats[id].uni,
+        groups: groupStats[id],
       }))
       .filter(s => s.count > 0)
       .sort((a, b) => b.count - a.count);
 
-    return { nodes: parsedNodes, clusterStats: sortedStats, quotes: clusterQuotes, totalCount: data.length, centers };
-  }, [data]);
+    return { nodes: parsedNodes, clusterStats: sortedStats, quotes: clusterQuotes, totalCount: data.length, centers, uniqueGroups, groupTotals };
+  }, [data, groupBy]);
 
   return (
     <View style={styles.container} ref={ref}>
@@ -191,28 +202,66 @@ export const SemanticClusterChart: React.FC<Props> = ({ data, mode }) => {
           ) : (
             <View>
               <Text style={styles.subTitle}>Según grupo...</Text>
+              
+              <View style={{flexDirection: 'row', marginBottom: 20, gap: 8, flexWrap: 'wrap'}}>
+                {[
+                  { id: 'target', label: 'Público' },
+                  { id: 'sexo', label: 'Sexo' },
+                  { id: 'edad', label: 'Edad' },
+                  { id: 'curso', label: 'Curso' },
+                  { id: 'comuna', label: 'Comuna' }
+                ].map(opt => (
+                  <TouchableOpacity 
+                    key={opt.id}
+                    onPress={() => setGroupBy(opt.id as any)} 
+                    style={{
+                      paddingVertical: 4, paddingHorizontal: 10, 
+                      backgroundColor: groupBy === opt.id ? '#3b82f6' : '#f1f5f9', 
+                      borderRadius: 16
+                    }}>
+                    <Text style={{fontWeight: '600', fontSize: 11, color: groupBy === opt.id ? '#fff' : '#475569'}}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
               <View style={styles.legendRow}>
-                <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: '#3b82f6' }]} /><Text style={styles.legendText}>Escolar</Text></View>
-                <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: '#ec4899' }]} /><Text style={styles.legendText}>Universitario</Text></View>
+                {uniqueGroups.map((group, idx) => (
+                   <View key={group} style={styles.legendItem}>
+                     <View style={[styles.dot, { backgroundColor: GROUP_COLORS[idx % GROUP_COLORS.length] }]} />
+                     <Text style={styles.legendText}>{group}</Text>
+                   </View>
+                ))}
               </View>
 
               <View style={styles.barsContainer}>
                 {clusterStats.map((stat) => {
-                  const pEscolar = stat.escolar > 0 ? (stat.escolar / data.filter(d => d.target.toLowerCase() === 'escolar').length) * 100 : 0;
-                  const pUni = stat.uni > 0 ? (stat.uni / data.filter(d => d.target.toLowerCase() === 'universitario').length) * 100 : 0;
-
                   return (
                     <View key={stat.cluster.id} style={styles.barStatItem}>
                       <Text style={styles.barLabel}>{stat.cluster.name}</Text>
                       <View style={styles.barPair}>
-                        <View style={styles.singleBarRow}>
-                          <View style={[styles.horizBar, { width: `${Math.min(pEscolar * 2, 100)}%`, backgroundColor: '#3b82f6' }]} />
-                          <Text style={styles.barPct}>{Math.round(pEscolar)}%</Text>
-                        </View>
-                        <View style={styles.singleBarRow}>
-                          <View style={[styles.horizBar, { width: `${Math.min(pUni * 2, 100)}%`, backgroundColor: '#ec4899' }]} />
-                          <Text style={styles.barPct}>{Math.round(pUni)}%</Text>
-                        </View>
+                        {uniqueGroups.map((group, idx) => {
+                          const groupCount = stat.groups[group] || 0;
+                          const groupTotal = data.filter(d => {
+                            let val = (d.target || 'N/A').toString();
+                            if (groupBy === 'sexo') val = String(d.sexo || 'N/A').trim() || 'N/A';
+                            else if (groupBy === 'edad') val = String(d.edad || 'N/A').trim() || 'N/A';
+                            else if (groupBy === 'curso') val = String(d.curso || 'N/A').trim() || 'N/A';
+                            else if (groupBy === 'comuna') val = String(d.comuna || 'N/A').trim() || 'N/A';
+                            if (groupBy === 'target') val = val.charAt(0).toUpperCase() + val.slice(1).toLowerCase();
+                            return val === group;
+                          }).length;
+                          
+                          const pct = groupTotal > 0 ? (groupCount / groupTotal) * 100 : 0;
+                          
+                          return (
+                            <View key={group} style={styles.singleBarRow}>
+                              <View style={[styles.horizBar, { width: `${Math.min(pct * 2, 100)}%`, backgroundColor: GROUP_COLORS[idx % GROUP_COLORS.length] }]} />
+                              <Text style={styles.barPct}>{Math.round(pct)}%</Text>
+                            </View>
+                          );
+                        })}
                       </View>
                     </View>
                   );
@@ -226,7 +275,11 @@ export const SemanticClusterChart: React.FC<Props> = ({ data, mode }) => {
         <View style={styles.graphPanel}>
           <View style={styles.canvas}>
             {nodes.map(node => {
-              const color = mode === 'general' ? node.cluster.color : (node.isEscolar ? '#3b82f6' : '#ec4899');
+              let color = node.cluster.color;
+              if (mode === 'comparison') {
+                const idx = uniqueGroups.indexOf(node.groupName);
+                color = idx >= 0 ? GROUP_COLORS[idx % GROUP_COLORS.length] : '#ccc';
+              }
               
               // Animación de explosión: desde el centro (200,200) hacia su X,Y final
               const animatedX = explosionAnim.interpolate({

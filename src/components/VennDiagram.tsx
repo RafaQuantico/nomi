@@ -19,16 +19,25 @@ function getScore(answer?: string | number): number {
 
 export const VennDiagram: React.FC<Props> = ({ data, threshold = 2 }) => {
   const [hoveredCircle, setHoveredCircle] = useState<string | null>(null);
+  const [visualizarSexo, setVisualizarSexo] = useState(false);
 
-  const { counts, percentages, totalValid } = useMemo(() => {
-    let A = 0, B = 0, C = 0;
-    let AB = 0, AC = 0, BC = 0;
-    let ABC = 0;
-    let none = 0;
+  const { stats, percentages, totalValid } = useMemo(() => {
+    const createStats = () => ({ total: 0, sexo: {} as Record<string, number>, curso: {} as Record<string, number> });
+    
+    const s = {
+      A: createStats(), B: createStats(), C: createStats(),
+      AB: createStats(), AC: createStats(), BC: createStats(),
+      ABC: createStats(), none: createStats(),
+      totalA: createStats(), totalB: createStats(), totalC: createStats()
+    };
 
-    let totalA = 0; // Total Depresión
-    let totalB = 0; // Total Ansiedad
-    let totalC = 0; // Total Estrés
+    const addStat = (statObj: any, item: DashboardData) => {
+      statObj.total++;
+      const sVal = (item.sexo || 'N/A').toString().trim() || 'N/A';
+      const cVal = (item.curso || 'N/A').toString().trim() || 'N/A';
+      statObj.sexo[sVal] = (statObj.sexo[sVal] || 0) + 1;
+      statObj.curso[cVal] = (statObj.curso[cVal] || 0) + 1;
+    };
 
     data.forEach(item => {
       const animo = getScore(item.q1) + getScore(item.q2);
@@ -39,54 +48,77 @@ export const VennDiagram: React.FC<Props> = ({ data, threshold = 2 }) => {
       const hasB = ansiedad >= threshold;
       const hasC = sobrecarga >= threshold;
 
-      if (hasA) totalA++;
-      if (hasB) totalB++;
-      if (hasC) totalC++;
+      if (hasA) addStat(s.totalA, item);
+      if (hasB) addStat(s.totalB, item);
+      if (hasC) addStat(s.totalC, item);
 
-      if (hasA && hasB && hasC) ABC++;
-      else if (hasA && hasB) AB++;
-      else if (hasA && hasC) AC++;
-      else if (hasB && hasC) BC++;
-      else if (hasA) A++;
-      else if (hasB) B++;
-      else if (hasC) C++;
-      else none++;
+      if (hasA && hasB && hasC) addStat(s.ABC, item);
+      else if (hasA && hasB) addStat(s.AB, item);
+      else if (hasA && hasC) addStat(s.AC, item);
+      else if (hasB && hasC) addStat(s.BC, item);
+      else if (hasA) addStat(s.A, item);
+      else if (hasB) addStat(s.B, item);
+      else if (hasC) addStat(s.C, item);
+      else addStat(s.none, item);
     });
 
     const total = data.length;
     const percentages = {
-      A: total > 0 ? Math.round((totalA / total) * 100) : 0,
-      B: total > 0 ? Math.round((totalB / total) * 100) : 0,
-      C: total > 0 ? Math.round((totalC / total) * 100) : 0,
-      none: total > 0 ? Math.round((none / total) * 100) : 0,
+      A: total > 0 ? Math.round((s.totalA.total / total) * 100) : 0,
+      B: total > 0 ? Math.round((s.totalB.total / total) * 100) : 0,
+      C: total > 0 ? Math.round((s.totalC.total / total) * 100) : 0,
+      none: total > 0 ? Math.round((s.none.total / total) * 100) : 0,
     };
 
-    return { 
-      counts: { A, B, C, AB, AC, BC, ABC, none, totalA, totalB, totalC },
-      percentages,
-      totalValid: total
-    };
+    return { stats: s, percentages, totalValid: total };
   }, [data, threshold]);
 
   const renderDescription = () => {
+    const formatBreakdown = (sObj: any) => {
+      if (!sObj || sObj.total === 0) return '';
+      const cursos = Object.entries(sObj.curso).map(([c, n]) => `${c}: ${n}`).join(', ');
+      return cursos ? `\n\nDesglose por Curso:\n${cursos}` : '';
+    };
+
     switch (hoveredCircle) {
       case 'A':
-        return `Depresión: ${counts.totalA} estudiantes reportan síntomas frecuentes de desánimo o tristeza.`;
+        return `Depresión: ${stats.totalA.total} estudiantes reportan síntomas frecuentes de desánimo o tristeza.${formatBreakdown(stats.totalA)}`;
       case 'B':
-        return `Ansiedad: ${counts.totalB} estudiantes reportan nerviosismo o preocupación recurrente.`;
+        return `Ansiedad: ${stats.totalB.total} estudiantes reportan nerviosismo o preocupación recurrente.${formatBreakdown(stats.totalB)}`;
       case 'C':
-        return `Estrés: ${counts.totalC} estudiantes reportan alta sobrecarga o dificultad para relajarse.`;
+        return `Estrés: ${stats.totalC.total} estudiantes reportan alta sobrecarga o dificultad para relajarse.${formatBreakdown(stats.totalC)}`;
       case 'ABC':
-        return `Malestar Emocional: ${counts.ABC} estudiantes presentan las 3 dimensiones de riesgo simultáneamente. Requieren atención prioritaria.`;
+        return `Malestar Emocional: ${stats.ABC.total} estudiantes presentan las 3 dimensiones de riesgo simultáneamente. Requieren atención prioritaria.${formatBreakdown(stats.ABC)}`;
       default:
         return 'Pasa el cursor sobre los círculos para ver más detalles.';
     }
+  };
+
+  const renderCount = (sObj: any) => {
+    if (!sObj || sObj.total === 0) return '';
+    if (!visualizarSexo) return sObj.total.toString();
+    
+    // Si estamos visualizando por sexo, devolvemos un string con saltos de línea (H: 2 \n M: 3)
+    return Object.entries(sObj.sexo)
+      .filter(([_, v]) => (v as number) > 0)
+      .map(([k, v]) => `${k.charAt(0).toUpperCase() || '?'}: ${v}`)
+      .join('\n');
   };
 
   return (
     <View style={styles.wrapper}>
       <Text style={styles.title}>Salud mental en usuarios</Text>
       <Text style={styles.subtitle}>Superposición de dimensiones de riesgo</Text>
+
+      <View style={{flexDirection: 'row', justifyContent: 'center', marginBottom: 20}}>
+        <Pressable 
+          onPress={() => setVisualizarSexo(!visualizarSexo)} 
+          style={{paddingVertical: 6, paddingHorizontal: 16, backgroundColor: visualizarSexo ? '#3b82f6' : '#f1f5f9', borderRadius: 20}}>
+          <Text style={{fontWeight: '600', fontSize: 13, color: visualizarSexo ? '#fff' : '#475569'}}>
+            {visualizarSexo ? '✓ Desglose por Sexo' : 'Ver desglose por Sexo'}
+          </Text>
+        </Pressable>
+      </View>
 
       <View style={styles.contentRow}>
         {/* Lado Izquierdo: Diagrama de Venn (Valores Absolutos) */}
@@ -116,14 +148,14 @@ export const VennDiagram: React.FC<Props> = ({ data, threshold = 2 }) => {
             <Text style={[styles.label, styles.labelC]} pointerEvents="none">ESTRÉS</Text>
 
             {/* Conteos puros */}
-            <Text style={[styles.count, styles.countA]} pointerEvents="none">{counts.A > 0 ? counts.A : ''}</Text>
-            <Text style={[styles.count, styles.countB]} pointerEvents="none">{counts.B > 0 ? counts.B : ''}</Text>
-            <Text style={[styles.count, styles.countC]} pointerEvents="none">{counts.C > 0 ? counts.C : ''}</Text>
+            <Text style={[styles.count, styles.countA, visualizarSexo && {fontSize: 10, lineHeight: 12}]} pointerEvents="none">{renderCount(stats.A)}</Text>
+            <Text style={[styles.count, styles.countB, visualizarSexo && {fontSize: 10, lineHeight: 12}]} pointerEvents="none">{renderCount(stats.B)}</Text>
+            <Text style={[styles.count, styles.countC, visualizarSexo && {fontSize: 10, lineHeight: 12}]} pointerEvents="none">{renderCount(stats.C)}</Text>
             
             {/* Intersecciones de a 2 */}
-            <Text style={[styles.count, styles.countAB]} pointerEvents="none">{counts.AB > 0 ? counts.AB : ''}</Text>
-            <Text style={[styles.count, styles.countAC]} pointerEvents="none">{counts.AC > 0 ? counts.AC : ''}</Text>
-            <Text style={[styles.count, styles.countBC]} pointerEvents="none">{counts.BC > 0 ? counts.BC : ''}</Text>
+            <Text style={[styles.count, styles.countAB, visualizarSexo && {fontSize: 10, lineHeight: 12}]} pointerEvents="none">{renderCount(stats.AB)}</Text>
+            <Text style={[styles.count, styles.countAC, visualizarSexo && {fontSize: 10, lineHeight: 12}]} pointerEvents="none">{renderCount(stats.AC)}</Text>
+            <Text style={[styles.count, styles.countBC, visualizarSexo && {fontSize: 10, lineHeight: 12}]} pointerEvents="none">{renderCount(stats.BC)}</Text>
             
             {/* Centro (Los 3) */}
             <Pressable 
@@ -131,7 +163,7 @@ export const VennDiagram: React.FC<Props> = ({ data, threshold = 2 }) => {
               //@ts-ignore
               onHoverIn={() => setHoveredCircle('ABC')} onHoverOut={() => setHoveredCircle(null)}
             >
-                <Text style={styles.countABC}>{counts.ABC > 0 ? counts.ABC : '0'}</Text>
+                <Text style={[styles.countABC, visualizarSexo && {fontSize: 12, lineHeight: 14}]}>{stats.ABC.total > 0 ? renderCount(stats.ABC) : '0'}</Text>
                 <Text style={styles.labelABC}>Malestar{"\n"}Emocional</Text>
             </Pressable>
           </View>
@@ -164,14 +196,14 @@ export const VennDiagram: React.FC<Props> = ({ data, threshold = 2 }) => {
             <Text style={[styles.label, styles.labelC]} pointerEvents="none">ESTRÉS</Text>
 
             {/* Conteos puros */}
-            <Text style={[styles.count, styles.countA]} pointerEvents="none">{counts.A > 0 ? `${Math.round((counts.A / totalValid) * 100)}%` : ''}</Text>
-            <Text style={[styles.count, styles.countB]} pointerEvents="none">{counts.B > 0 ? `${Math.round((counts.B / totalValid) * 100)}%` : ''}</Text>
-            <Text style={[styles.count, styles.countC]} pointerEvents="none">{counts.C > 0 ? `${Math.round((counts.C / totalValid) * 100)}%` : ''}</Text>
+            <Text style={[styles.count, styles.countA]} pointerEvents="none">{stats.A.total > 0 ? `${Math.round((stats.A.total / totalValid) * 100)}%` : ''}</Text>
+            <Text style={[styles.count, styles.countB]} pointerEvents="none">{stats.B.total > 0 ? `${Math.round((stats.B.total / totalValid) * 100)}%` : ''}</Text>
+            <Text style={[styles.count, styles.countC]} pointerEvents="none">{stats.C.total > 0 ? `${Math.round((stats.C.total / totalValid) * 100)}%` : ''}</Text>
             
             {/* Intersecciones de a 2 */}
-            <Text style={[styles.count, styles.countAB]} pointerEvents="none">{counts.AB > 0 ? `${Math.round((counts.AB / totalValid) * 100)}%` : ''}</Text>
-            <Text style={[styles.count, styles.countAC]} pointerEvents="none">{counts.AC > 0 ? `${Math.round((counts.AC / totalValid) * 100)}%` : ''}</Text>
-            <Text style={[styles.count, styles.countBC]} pointerEvents="none">{counts.BC > 0 ? `${Math.round((counts.BC / totalValid) * 100)}%` : ''}</Text>
+            <Text style={[styles.count, styles.countAB]} pointerEvents="none">{stats.AB.total > 0 ? `${Math.round((stats.AB.total / totalValid) * 100)}%` : ''}</Text>
+            <Text style={[styles.count, styles.countAC]} pointerEvents="none">{stats.AC.total > 0 ? `${Math.round((stats.AC.total / totalValid) * 100)}%` : ''}</Text>
+            <Text style={[styles.count, styles.countBC]} pointerEvents="none">{stats.BC.total > 0 ? `${Math.round((stats.BC.total / totalValid) * 100)}%` : ''}</Text>
             
             {/* Centro (Los 3) */}
             <Pressable 
@@ -179,7 +211,7 @@ export const VennDiagram: React.FC<Props> = ({ data, threshold = 2 }) => {
               //@ts-ignore
               onHoverIn={() => setHoveredCircle('ABC')} onHoverOut={() => setHoveredCircle(null)}
             >
-                <Text style={styles.countABC}>{counts.ABC > 0 ? `${Math.round((counts.ABC / totalValid) * 100)}%` : '0%'}</Text>
+                <Text style={styles.countABC}>{stats.ABC.total > 0 ? `${Math.round((stats.ABC.total / totalValid) * 100)}%` : '0%'}</Text>
                 <Text style={styles.labelABC}>Malestar{"\n"}Emocional</Text>
             </Pressable>
           </View>
@@ -194,7 +226,7 @@ export const VennDiagram: React.FC<Props> = ({ data, threshold = 2 }) => {
 
       <View style={styles.legendContainer}>
         <Text style={styles.legendText}>
-          Total analizados: {totalValid}. Sin riesgo significativo: {percentages.none}% ({counts.none})
+          Total analizados: {totalValid}. Sin riesgo significativo: {percentages.none}% ({stats.none.total})
         </Text>
       </View>
 
