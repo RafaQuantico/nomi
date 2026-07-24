@@ -202,6 +202,12 @@ export interface DashboardData {
   target: string;
   route: string;
   textResponse: string;
+  q1?: string | number;
+  q2?: string | number;
+  q3?: string | number;
+  q4?: string | number;
+  q5?: string | number;
+  q6?: string | number;
 }
 
 export async function fetchDashboardData(): Promise<DashboardData[]> {
