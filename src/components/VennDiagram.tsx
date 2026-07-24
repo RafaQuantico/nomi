@@ -8,11 +8,12 @@ interface Props {
 }
 
 function getScore(answer?: string | number): number {
-  if (!answer) return 0;
-  const ans = String(answer).toLowerCase().replace(/\./g, '').trim();
-  if (ans.includes('casi todos los días')) return 3;
-  if (ans.includes('más de la mitad')) return 2;
-  if (ans.includes('algunos días')) return 1;
+  if (answer === undefined || answer === null || answer === '') return 0;
+  const ansStr = String(answer).toLowerCase().replace(/\./g, '').trim();
+  
+  if (ansStr === '3' || ansStr.includes('casi todos los días')) return 3;
+  if (ansStr === '2' || ansStr.includes('más de la mitad')) return 2;
+  if (ansStr === '1' || ansStr.includes('algunos días')) return 1;
   return 0;
 }
 
