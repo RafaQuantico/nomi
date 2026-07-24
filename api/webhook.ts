@@ -7,7 +7,7 @@ export default async function handler(req: Request) {
   // CORS headers – allow the browser to call this endpoint
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 
@@ -16,15 +16,27 @@ export default async function handler(req: Request) {
   }
 
   try {
-    const body = await req.text();
+    let gsResponse;
 
-    // Forward the request to Google Apps Script from the server side (no CORS issues)
-    const gsResponse = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body,
-      redirect: 'follow',
-    });
+    if (req.method === 'GET') {
+      // Forward GET request with URL parameters
+      const url = new URL(req.url);
+      const targetUrl = `${APPS_SCRIPT_URL}${url.search}`;
+      
+      gsResponse = await fetch(targetUrl, {
+        method: 'GET',
+        redirect: 'follow',
+      });
+    } else {
+      // Forward POST request
+      const body = await req.text();
+      gsResponse = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body,
+        redirect: 'follow',
+      });
+    }
 
     const text = await gsResponse.text();
 
