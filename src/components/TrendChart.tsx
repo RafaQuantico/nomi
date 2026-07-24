@@ -117,7 +117,7 @@ export const TrendChart: React.FC<Props> = ({ data, threshold = 2 }) => {
         <View style={styles.chartContainer}>
           {/* Lineas de fondo (Grid) */}
           <View style={styles.gridContainer}>
-            {[40, 30, 20, 10, 0].map(val => (
+            {[100, 80, 60, 40, 20, 0].map(val => (
               <View key={val} style={styles.gridLine}>
                 <Text style={styles.gridLabel}>{val}%</Text>
                 <View style={styles.gridDash} />
@@ -133,33 +133,33 @@ export const TrendChart: React.FC<Props> = ({ data, threshold = 2 }) => {
                   {/* Depresión */}
                   <View style={styles.singleBarContainer}>
                     <Animated.Text style={[styles.barValueText, { opacity: animValue }]}>
-                      {group.pA > 0 ? (group.pA).toFixed(2).replace(/^0+/, '') : ''}
+                      {group.pA > 0 ? `${Math.round(group.pA * 100)}%` : ''}
                     </Animated.Text>
                     <Animated.View style={[styles.bar, { backgroundColor: '#ef4444', height: animValue.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [0, group.pA * 2 * MAX_HEIGHT] // multiplicamos por 2 asumiendo un max 50% = 100% de altura
+                      outputRange: [0, group.pA * MAX_HEIGHT] // Max 1.0 (100%) = MAX_HEIGHT
                     }) }]} />
                   </View>
                   
                   {/* Ansiedad */}
                   <View style={styles.singleBarContainer}>
                     <Animated.Text style={[styles.barValueText, { opacity: animValue }]}>
-                      {group.pB > 0 ? (group.pB).toFixed(2).replace(/^0+/, '') : ''}
+                      {group.pB > 0 ? `${Math.round(group.pB * 100)}%` : ''}
                     </Animated.Text>
                     <Animated.View style={[styles.bar, { backgroundColor: '#3b82f6', height: animValue.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [0, group.pB * 2 * MAX_HEIGHT]
+                      outputRange: [0, group.pB * MAX_HEIGHT]
                     }) }]} />
                   </View>
 
                   {/* Estrés */}
                   <View style={styles.singleBarContainer}>
                     <Animated.Text style={[styles.barValueText, { opacity: animValue }]}>
-                      {group.pC > 0 ? (group.pC).toFixed(2).replace(/^0+/, '') : ''}
+                      {group.pC > 0 ? `${Math.round(group.pC * 100)}%` : ''}
                     </Animated.Text>
                     <Animated.View style={[styles.bar, { backgroundColor: '#10b981', height: animValue.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [0, group.pC * 2 * MAX_HEIGHT]
+                      outputRange: [0, group.pC * MAX_HEIGHT]
                     }) }]} />
                   </View>
                 </View>
