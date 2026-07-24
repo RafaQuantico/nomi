@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Updates from 'expo-updates';
+import { loginUserWebhook, registerUserWebhook } from '../services/webhookService';
 
 export interface User {
   uuid: string;
@@ -32,13 +33,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const uuid = await AsyncStorage.getItem('uuid');
       const savedPasskey = await AsyncStorage.getItem('passkey');
-      if (uuid && savedPasskey) {
-        const usersJson = await AsyncStorage.getItem('mock_users_db');
-        const users = usersJson ? JSON.parse(usersJson) : [];
-        const loggedUser = users.find((u: any) => u.uuid === uuid && u.passkey === savedPasskey);
-        
-        if (loggedUser) {
-          setUser(loggedUser);
+        // Opcional: Podríamos validar la sesión con el backend aquí también,
+        // pero para evitar demoras al abrir la app, confiamos en la sesión guardada.
+        if (uuid && savedPasskey) {
+          const email = await AsyncStorage.getItem('email') || '';
+          const nickname = await AsyncStorage.getItem('nickname') || '';
+          setUser({ uuid, email, nickname });
           setPasskey(savedPasskey);
         } else {
           throw new Error('Sesión inválida');
@@ -52,16 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function login(identifier: string, pk: string) {
-    const usersJson = await AsyncStorage.getItem('mock_users_db');
-    const users = usersJson ? JSON.parse(usersJson) : [];
-    
-    const loggedUser = users.find((u: any) => 
-      (u.email === identifier || u.nickname === identifier || u.uuid === identifier) && u.passkey === pk
-    );
-
-    if (!loggedUser) {
-      throw new Error('Credenciales incorrectas o usuario no encontrado.');
-    }
+    const loggedUser = await loginUserWebhook(identifier, pk);
 
     await AsyncStorage.multiSet([
       ['uuid', loggedUser.uuid],
@@ -74,22 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function createUser(nickname: string, email: string, pk: string) {
-    const usersJson = await AsyncStorage.getItem('mock_users_db');
-    const users = usersJson ? JSON.parse(usersJson) : [];
-
-    if (users.some((u: any) => u.email === email)) {
-      throw new Error('El correo ya está registrado.');
-    }
-
-    const newUser = {
-      uuid: Math.random().toString(36).substring(2, 10),
-      nickname,
-      email,
-      passkey: pk,
-    };
-    
-    users.push(newUser);
-    await AsyncStorage.setItem('mock_users_db', JSON.stringify(users));
+    const newUser = await registerUserWebhook(email, nickname, pk);
 
     await AsyncStorage.multiSet([
       ['uuid', newUser.uuid],

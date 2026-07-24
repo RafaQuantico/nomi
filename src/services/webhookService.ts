@@ -2,10 +2,10 @@ import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
 // Proxy en Vercel — evita CORS al llamar a Google Apps Script
-// En desarrollo local, usamos la URL directa de Apps Script con 'no-cors'
+// En desarrollo local, usamos la URL productiva de Vercel para evitar fallos por CORS
 const isDev = process.env.NODE_ENV === 'development';
 const APPS_SCRIPT_URL = isDev
-  ? 'https://script.google.com/macros/s/AKfycbzuckGDrAO4FXJvhTS08XbYDQyGmiVS-masTb7Ov3lHu8sDZpOV8_vpudET0b7NXkZe/exec'
+  ? 'https://nomi-app-web.vercel.app/api/webhook'
   : '/api/webhook';
 
 export interface WelcomeEmailPayload {
@@ -226,6 +226,38 @@ export async function fetchDashboardData(): Promise<DashboardData[]> {
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
     throw error;
+  }
+}
+
+export async function registerUserWebhook(email: string, nickname: string, passkey: string): Promise<{uuid: string, email: string, nickname: string}> {
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'register_user', email, nickname, passkey }),
+  });
+  
+  const json = await response.json();
+  if (json.success) {
+    return json.user;
+  } else {
+    throw new Error(json.error || 'Error al registrar usuario en el servidor.');
+  }
+}
+
+export async function loginUserWebhook(identifier: string, passkey: string): Promise<{uuid: string, email: string, nickname: string}> {
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'login_user', identifier, passkey }),
+  });
+  
+  const json = await response.json();
+  if (json.success) {
+    return json.user;
+  } else {
+    throw new Error(json.error || 'Credenciales incorrectas o usuario no encontrado.');
   }
 }
 
