@@ -92,7 +92,7 @@ export const SemanticClusterChart: React.FC<Props> = ({ data, mode }) => {
     }
   }, [isInView, explosionAnim, fadeAnim]);
 
-  const { nodes, clusterStats, quotes, totalCount } = useMemo(() => {
+  const { nodes, clusterStats, quotes, totalCount, centers } = useMemo(() => {
     // Definir centros para cada cluster en un canvas de 400x400
     const centers: Record<string, { x: number, y: number }> = {
       'C1': { x: 300, y: 100 },
@@ -162,7 +162,7 @@ export const SemanticClusterChart: React.FC<Props> = ({ data, mode }) => {
       .filter(s => s.count > 0)
       .sort((a, b) => b.count - a.count);
 
-    return { nodes: parsedNodes, clusterStats: sortedStats, quotes: clusterQuotes, totalCount: data.length };
+    return { nodes: parsedNodes, clusterStats: sortedStats, quotes: clusterQuotes, totalCount: data.length, centers };
   }, [data]);
 
   return (
@@ -254,6 +254,33 @@ export const SemanticClusterChart: React.FC<Props> = ({ data, mode }) => {
                     }
                   ]}
                 />
+              )
+            })}
+
+            {/* Etiquetas flotantes */}
+            {mode === 'general' && clusterStats.map(stat => {
+              const center = centers[stat.cluster.id];
+              // Offset labels depending on their center so they don't overlap nodes as much
+              let offsetX = -30;
+              let offsetY = -30;
+              if (center.x < 200) offsetX = -80;
+              if (center.x > 200) offsetX = 30;
+              if (center.y > 200) offsetY = 40;
+
+              return (
+                <Animated.Text
+                  key={`label-${stat.cluster.id}`}
+                  style={[
+                    styles.floatingLabel,
+                    {
+                      left: center.x + offsetX,
+                      top: center.y + offsetY,
+                      opacity: fadeAnim,
+                    }
+                  ]}
+                >
+                  {stat.cluster.name}
+                </Animated.Text>
               )
             })}
           </View>
@@ -392,5 +419,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94a3b8',
     fontWeight: '600',
+  },
+  floatingLabel: {
+    position: 'absolute',
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1e293b',
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    maxWidth: 100,
+    textAlign: 'center',
   }
 });
