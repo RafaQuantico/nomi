@@ -253,7 +253,6 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    transition: 'all 0.2s ease',
   },
   circleHovered: {
     transform: [{ scale: 1.05 }],
