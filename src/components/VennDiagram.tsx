@@ -88,8 +88,9 @@ export const VennDiagram: React.FC<Props> = ({ data, threshold = 2 }) => {
       <Text style={styles.subtitle}>Superposición de dimensiones de riesgo</Text>
 
       <View style={styles.contentRow}>
-        {/* Lado Izquierdo: Diagrama de Venn */}
+        {/* Lado Izquierdo: Diagrama de Venn (Valores Absolutos) */}
         <View style={styles.diagramSection}>
+          <Text style={styles.diagramTitle}>Casos Totales</Text>
           <View style={styles.diagramContainer}>
             {/* Círculos Interactivos */}
             <Pressable 
@@ -133,68 +134,69 @@ export const VennDiagram: React.FC<Props> = ({ data, threshold = 2 }) => {
                 <Text style={styles.labelABC}>Malestar{"\n"}Emocional</Text>
             </Pressable>
           </View>
-          
-          <View style={styles.hoverInfoBox}>
-            <Text style={styles.hoverInfoText}>{renderDescription()}</Text>
-          </View>
         </View>
 
-        {/* Lado Derecho: Porcentajes */}
-        <View style={styles.statsSection}>
-          <Text style={styles.statsTitle}>Porcentajes de Riesgo</Text>
-          
-          <View style={styles.statRow}>
-            <View style={styles.statHeader}>
-              <View style={[styles.statDot, { backgroundColor: '#3b82f6' }]} />
-              <Text style={styles.statLabel}>Depresión</Text>
-              <Text style={styles.statValue}>{percentages.A}%</Text>
-            </View>
-            <View style={styles.barTrack}>
-              <View style={[styles.barFill, { width: `${percentages.A}%` as any, backgroundColor: '#3b82f6' }]} />
-            </View>
-          </View>
+        {/* Lado Derecho: Diagrama de Venn (Porcentajes) */}
+        <View style={styles.diagramSection}>
+          <Text style={styles.diagramTitle}>Porcentajes sobre el total</Text>
+          <View style={styles.diagramContainer}>
+            {/* Círculos Interactivos */}
+            <Pressable 
+              style={[styles.circle, styles.circleA, hoveredCircle === 'A' && styles.circleHovered]}
+              //@ts-ignore
+              onHoverIn={() => setHoveredCircle('A')} onHoverOut={() => setHoveredCircle(null)}
+            />
+            <Text style={[styles.label, styles.labelA]} pointerEvents="none">DEPRESIÓN</Text>
+            
+            <Pressable 
+              style={[styles.circle, styles.circleB, hoveredCircle === 'B' && styles.circleHovered]}
+              //@ts-ignore
+              onHoverIn={() => setHoveredCircle('B')} onHoverOut={() => setHoveredCircle(null)}
+            />
+            <Text style={[styles.label, styles.labelB]} pointerEvents="none">ANSIEDAD</Text>
+            
+            <Pressable 
+              style={[styles.circle, styles.circleC, hoveredCircle === 'C' && styles.circleHovered]}
+              //@ts-ignore
+              onHoverIn={() => setHoveredCircle('C')} onHoverOut={() => setHoveredCircle(null)}
+            />
+            <Text style={[styles.label, styles.labelC]} pointerEvents="none">ESTRÉS</Text>
 
-          <View style={styles.statRow}>
-            <View style={styles.statHeader}>
-              <View style={[styles.statDot, { backgroundColor: '#10b981' }]} />
-              <Text style={styles.statLabel}>Ansiedad</Text>
-              <Text style={styles.statValue}>{percentages.B}%</Text>
-            </View>
-            <View style={styles.barTrack}>
-              <View style={[styles.barFill, { width: `${percentages.B}%` as any, backgroundColor: '#10b981' }]} />
-            </View>
-          </View>
-
-          <View style={styles.statRow}>
-            <View style={styles.statHeader}>
-              <View style={[styles.statDot, { backgroundColor: '#f59e0b' }]} />
-              <Text style={styles.statLabel}>Estrés</Text>
-              <Text style={styles.statValue}>{percentages.C}%</Text>
-            </View>
-            <View style={styles.barTrack}>
-              <View style={[styles.barFill, { width: `${percentages.C}%` as any, backgroundColor: '#f59e0b' }]} />
-            </View>
-          </View>
-
-          <View style={[styles.statRow, { marginTop: 10 }]}>
-            <View style={styles.statHeader}>
-              <View style={[styles.statDot, { backgroundColor: '#9ca3af' }]} />
-              <Text style={styles.statLabel}>Sin riesgo significativo</Text>
-              <Text style={styles.statValue}>{percentages.none}%</Text>
-            </View>
-          </View>
-
-          <View style={styles.legendContainer}>
-            <Text style={styles.legendText}>
-              Total analizados: {totalValid}
-            </Text>
-            <Text style={styles.legendText}>
-              * Los alumnos pueden estar en múltiples categorías.
-            </Text>
+            {/* Conteos puros */}
+            <Text style={[styles.count, styles.countA]} pointerEvents="none">{counts.A > 0 ? `${Math.round((counts.A / totalValid) * 100)}%` : ''}</Text>
+            <Text style={[styles.count, styles.countB]} pointerEvents="none">{counts.B > 0 ? `${Math.round((counts.B / totalValid) * 100)}%` : ''}</Text>
+            <Text style={[styles.count, styles.countC]} pointerEvents="none">{counts.C > 0 ? `${Math.round((counts.C / totalValid) * 100)}%` : ''}</Text>
+            
+            {/* Intersecciones de a 2 */}
+            <Text style={[styles.count, styles.countAB]} pointerEvents="none">{counts.AB > 0 ? `${Math.round((counts.AB / totalValid) * 100)}%` : ''}</Text>
+            <Text style={[styles.count, styles.countAC]} pointerEvents="none">{counts.AC > 0 ? `${Math.round((counts.AC / totalValid) * 100)}%` : ''}</Text>
+            <Text style={[styles.count, styles.countBC]} pointerEvents="none">{counts.BC > 0 ? `${Math.round((counts.BC / totalValid) * 100)}%` : ''}</Text>
+            
+            {/* Centro (Los 3) */}
+            <Pressable 
+              style={styles.countABCContainer}
+              //@ts-ignore
+              onHoverIn={() => setHoveredCircle('ABC')} onHoverOut={() => setHoveredCircle(null)}
+            >
+                <Text style={styles.countABC}>{counts.ABC > 0 ? `${Math.round((counts.ABC / totalValid) * 100)}%` : '0%'}</Text>
+                <Text style={styles.labelABC}>Malestar{"\n"}Emocional</Text>
+            </Pressable>
           </View>
         </View>
 
       </View>
+
+      {/* Caja de información de Hover general */}
+      <View style={styles.hoverInfoBox}>
+        <Text style={styles.hoverInfoText}>{renderDescription()}</Text>
+      </View>
+
+      <View style={styles.legendContainer}>
+        <Text style={styles.legendText}>
+          Total analizados: {totalValid}. Sin riesgo significativo: {percentages.none}% ({counts.none})
+        </Text>
+      </View>
+
     </View>
   );
 };
@@ -211,27 +213,35 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#f0f0f0',
+    borderColor: '#e2e8f0',
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
-    color: '#111',
+    color: '#0f172a',
     marginBottom: 6,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: '#666',
+    color: '#64748b',
     marginBottom: 30,
+    textAlign: 'center',
   },
   contentRow: {
     flexDirection: Dimensions.get('window').width > 700 ? 'row' : 'column',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 40,
   },
   diagramSection: {
     alignItems: 'center',
-    flex: 1,
+  },
+  diagramTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 20,
   },
   diagramContainer: {
     width: 300,
@@ -329,10 +339,10 @@ const styles = StyleSheet.create({
     lineHeight: 10,
   },
   hoverInfoBox: {
-    marginTop: 10,
-    padding: 12,
+    marginTop: 30,
+    padding: 16,
     backgroundColor: '#f8fafc',
-    borderRadius: 8,
+    borderRadius: 12,
     minHeight: 60,
     width: '100%',
     justifyContent: 'center',
@@ -340,58 +350,10 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
   hoverInfoText: {
-    fontSize: 13,
+    fontSize: 15,
     color: '#334155',
     textAlign: 'center',
     fontWeight: '500',
-  },
-  statsSection: {
-    flex: 1,
-    minWidth: 250,
-    backgroundColor: '#f8fafc',
-    padding: 20,
-    borderRadius: 16,
-  },
-  statsTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#111',
-    marginBottom: 16,
-  },
-  statRow: {
-    marginBottom: 16,
-  },
-  statHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  statDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
-  },
-  statLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#334155',
-    flex: 1,
-  },
-  statValue: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0f172a',
-  },
-  barTrack: {
-    height: 8,
-    backgroundColor: '#e2e8f0',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: 4,
   },
   legendContainer: {
     marginTop: 20,
@@ -400,8 +362,9 @@ const styles = StyleSheet.create({
     borderTopColor: '#e2e8f0',
   },
   legendText: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#64748b',
-    marginBottom: 4,
+    textAlign: 'center',
+    fontWeight: '500'
   }
 });
