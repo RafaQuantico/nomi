@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, ScrollView, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { fetchDashboardData, DashboardData } from '../services/webhookService';
 import { VennDiagram } from '../components/VennDiagram';
+import { TrendChart } from '../components/TrendChart';
 
 export default function DashboardInteractiveScreen() {
   const [data, setData] = useState<DashboardData[]>([]);
@@ -187,6 +188,11 @@ export default function DashboardInteractiveScreen() {
         {/* --- NUEVO DIAGRAMA DE VENN --- */}
         {filteredData.length > 0 && (
           <VennDiagram data={filteredData} threshold={2} />
+        )}
+
+        {/* --- NUEVO GRÁFICO DE TENDENCIAS POR GRUPO --- */}
+        {filteredData.length > 0 && (
+          <TrendChart data={data} threshold={2} />
         )}
 
         <View style={styles.section}>
