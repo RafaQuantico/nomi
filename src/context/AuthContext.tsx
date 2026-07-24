@@ -2,8 +2,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Updates from 'expo-updates';
 
-const WS_URL = 'wss://nomi-dev.merlin-lab.com/ws';
-
 export interface User {
   uuid: string;
   nickname: string;
@@ -21,40 +19,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-function sendAuthMessage(payload: object): Promise<User> {
-  return new Promise((resolve, reject) => {
-    const ws = new WebSocket(WS_URL);
-    let settled = false;
-    const timeoutId = setTimeout(() => {
-      finish(null, new Error('El servidor no respondió. Verifica la conexión.'));
-    }, 8000);
-
-    const finish = (result: User | null, error: Error | null = null) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeoutId);
-      ws.close();
-      if (error) reject(error);
-      else resolve(result!);
-    };
-
-    ws.addEventListener('open', () => ws.send(JSON.stringify(payload)));
-    ws.addEventListener('message', (event) => {
-      if (typeof event.data !== 'string') return;
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'user_authenticated') finish(data.user);
-        else if (data.type === 'auth_error') finish(null, new Error(data.message));
-        else finish(null, new Error('Respuesta inesperada del servidor.'));
-      } catch {
-        finish(null, new Error('Respuesta inválida del servidor.'));
-      }
-    });
-    ws.addEventListener('error', () => finish(null, new Error('No se pudo conectar al servidor.')));
-    ws.addEventListener('close', () => finish(null, new Error('Servidor cerró la conexión.')));
-  });
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [passkey, setPasskey] = useState('');
@@ -69,9 +33,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const uuid = await AsyncStorage.getItem('uuid');
       const savedPasskey = await AsyncStorage.getItem('passkey');
       if (uuid && savedPasskey) {
-        const savedUser = await sendAuthMessage({ type: 'user_login', identifier: uuid, passkey: savedPasskey });
-        setUser(savedUser);
-        setPasskey(savedPasskey);
+        const usersJson = await AsyncStorage.getItem('mock_users_db');
+        const users = usersJson ? JSON.parse(usersJson) : [];
+        const loggedUser = users.find((u: any) => u.uuid === uuid && u.passkey === savedPasskey);
+        
+        if (loggedUser) {
+          setUser(loggedUser);
+          setPasskey(savedPasskey);
+        } else {
+          throw new Error('Sesión inválida');
+        }
       }
     } catch {
       await AsyncStorage.multiRemove(['uuid', 'passkey', 'nickname', 'email']);
@@ -81,7 +52,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function login(identifier: string, pk: string) {
-    const loggedUser = await sendAuthMessage({ type: 'user_login', identifier, passkey: pk });
+    const usersJson = await AsyncStorage.getItem('mock_users_db');
+    const users = usersJson ? JSON.parse(usersJson) : [];
+    
+    const loggedUser = users.find((u: any) => 
+      (u.email === identifier || u.nickname === identifier || u.uuid === identifier) && u.passkey === pk
+    );
+
+    if (!loggedUser) {
+      throw new Error('Credenciales incorrectas o usuario no encontrado.');
+    }
+
     await AsyncStorage.multiSet([
       ['uuid', loggedUser.uuid],
       ['passkey', pk],
@@ -93,7 +74,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function createUser(nickname: string, email: string, pk: string) {
-    const newUser = await sendAuthMessage({ type: 'user_create', nickname, email, passkey: pk });
+    const usersJson = await AsyncStorage.getItem('mock_users_db');
+    const users = usersJson ? JSON.parse(usersJson) : [];
+
+    if (users.some((u: any) => u.email === email)) {
+      throw new Error('El correo ya está registrado.');
+    }
+
+    const newUser = {
+      uuid: Math.random().toString(36).substring(2, 10),
+      nickname,
+      email,
+      passkey: pk,
+    };
+    
+    users.push(newUser);
+    await AsyncStorage.setItem('mock_users_db', JSON.stringify(users));
+
     await AsyncStorage.multiSet([
       ['uuid', newUser.uuid],
       ['passkey', pk],

@@ -3,9 +3,6 @@ import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
-const WS_URL = 'wss://nomi-dev.merlin-lab.com/ws';
-const CHUNK_INTERVAL_MS = 250; // Intervalo de lectura de chunks del archivo temporal
-
 export type RecordingState = 'idle' | 'recording' | 'processing' | 'done';
 
 interface UseAudioRecorderProps {
@@ -20,26 +17,16 @@ interface UseAudioRecorderProps {
 }
 
 export function useAudioRecorder({
-  uuid,
-  passkey,
-  eventPhase,
-  onTranscript,
-  onPartialTranscript,
-  onResponse,
   onStatus,
-  disableWebsocket,
 }: UseAudioRecorderProps) {
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [metering, setMetering] = useState(0);
   const recordingRef = useRef<Audio.Recording | null>(null);
-  const socketRef = useRef<WebSocket | null>(null);
   const chunkIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastFileSizeRef = useRef(0);
   const [finalUri, setFinalUri] = useState<string | null>(null);
 
   // Web specific refs
   const webMediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const webWsMediaRecorderRef = useRef<MediaRecorder | null>(null);
   const webChunksRef = useRef<Blob[]>([]);
 
   const startRecording = useCallback(async () => {
@@ -47,47 +34,10 @@ export function useAudioRecorder({
       if (Platform.OS === 'web') {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         
-        // Recorder 1: Para el archivo final (sin timeslice, evita corrupción de WebM)
+        // Recorder para el archivo final
         const fileMediaRecorder = new MediaRecorder(stream);
         webMediaRecorderRef.current = fileMediaRecorder;
         webChunksRef.current = [];
-
-        // Recorder 2: Para el WebSocket (con timeslice) - solo si no está deshabilitado
-        let wsMediaRecorder: MediaRecorder | null = null;
-        if (!disableWebsocket) {
-          wsMediaRecorder = new MediaRecorder(stream);
-          webWsMediaRecorderRef.current = wsMediaRecorder;
-
-          const ws = new WebSocket(WS_URL);
-          socketRef.current = ws;
-          ws.binaryType = 'arraybuffer';
-
-          ws.addEventListener('open', () => {
-            ws.send(JSON.stringify({ type: 'auth', uuid, passkey, eventPhase }));
-          });
-
-          ws.addEventListener('message', (event) => {
-            if (typeof event.data !== 'string') return;
-            try {
-              const data = JSON.parse(event.data);
-              if (data.type === 'status') onStatus?.(data.message);
-              else if (data.type === 'partial_transcript') onPartialTranscript?.(data.text + '...');
-              else if (data.type === 'transcript') onTranscript?.(data.text);
-              else if (data.type === 'response') onResponse?.(data.text);
-              else if (data.type === 'auth_error') {
-                onStatus?.(data.message);
-                stopRecording();
-              }
-            } catch { /* silenciar errores JSON */ }
-          });
-
-          // Enviar chunks al WebSocket en tiempo real
-          wsMediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0 && socketRef.current?.readyState === WebSocket.OPEN) {
-              socketRef.current.send(e.data); // Enviar blob directo es más eficiente
-            }
-          };
-        }
 
         // Guardar el archivo final intacto
         fileMediaRecorder.ondataavailable = (e) => {
@@ -101,9 +51,6 @@ export function useAudioRecorder({
           setMetering(Math.random() * 0.5 + 0.5); 
         }, 100);
 
-        if (wsMediaRecorder) {
-          wsMediaRecorder.start(CHUNK_INTERVAL_MS);
-        }
         fileMediaRecorder.start(); // sin timeslice!
         
         setRecordingState('recording');
@@ -133,74 +80,17 @@ export function useAudioRecorder({
             const normalized = Math.max(0, (status.metering + 60) / 60);
             setMetering(normalized);
           }
-        },
-        100
+        }
       );
       recordingRef.current = recording;
-      lastFileSizeRef.current = 0;
       setRecordingState('recording');
       onStatus?.('Escuchando... habla ahora.');
-
-      if (!disableWebsocket) {
-        const ws = new WebSocket(WS_URL);
-        socketRef.current = ws;
-        ws.binaryType = 'arraybuffer';
-
-        ws.addEventListener('open', () => {
-          ws.send(JSON.stringify({ type: 'auth', uuid, passkey, eventPhase }));
-        });
-
-        ws.addEventListener('message', (event) => {
-          if (typeof event.data !== 'string') return;
-          try {
-            const data = JSON.parse(event.data);
-            if (data.type === 'status') onStatus?.(data.message);
-            else if (data.type === 'partial_transcript') onPartialTranscript?.(data.text + '...');
-            else if (data.type === 'transcript') onTranscript?.(data.text);
-            else if (data.type === 'response') onResponse?.(data.text);
-            else if (data.type === 'auth_error') {
-              onStatus?.(data.message);
-              stopRecording();
-            }
-          } catch { /* silenciar errores JSON */ }
-        });
-      }
-
-      chunkIntervalRef.current = setInterval(async () => {
-        if (!recordingRef.current) return;
-        const uri = recordingRef.current.getURI();
-        if (!uri) return;
-
-        try {
-          const fileInfo = await FileSystem.getInfoAsync(uri);
-          if (!fileInfo.exists) return;
-          const currentSize = fileInfo.size ?? 0;
-          if (currentSize <= lastFileSizeRef.current) return;
-
-          const chunk = await FileSystem.readAsStringAsync(uri, {
-            encoding: 'base64',
-            position: lastFileSizeRef.current,
-            length: currentSize - lastFileSizeRef.current,
-          });
-
-          lastFileSizeRef.current = currentSize;
-
-          if (socketRef.current?.readyState === WebSocket.OPEN && !disableWebsocket) {
-            const binaryString = atob(chunk);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-              bytes[i] = binaryString.charCodeAt(i);
-            }
-            socketRef.current.send(bytes.buffer);
-          }
-        } catch { /* Ignorar errores */ }
-      }, CHUNK_INTERVAL_MS);
 
     } catch (error: any) {
       onStatus?.(`Error al iniciar grabación: ${error.message}`);
       setRecordingState('idle');
     }
-  }, [uuid, passkey, eventPhase, disableWebsocket]);
+  }, [onStatus]);
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
     if (chunkIntervalRef.current) {
@@ -215,20 +105,12 @@ export function useAudioRecorder({
     if (Platform.OS === 'web') {
       if (webMediaRecorderRef.current && webMediaRecorderRef.current.state !== 'inactive') {
         const currentMime = webMediaRecorderRef.current.mimeType || 'audio/webm';
-        
-        if (webWsMediaRecorderRef.current && webWsMediaRecorderRef.current.state !== 'inactive') {
-          webWsMediaRecorderRef.current.stop();
-        }
 
         return new Promise<string | null>((resolve) => {
           webMediaRecorderRef.current!.onstop = () => {
             const finalBlob = new Blob(webChunksRef.current, { type: currentMime });
             uri = URL.createObjectURL(finalBlob);
             setFinalUri(uri);
-            
-            if (socketRef.current?.readyState === WebSocket.OPEN) {
-              socketRef.current.send(JSON.stringify({ type: 'audio_end' }));
-            }
             resolve(uri);
           };
           webMediaRecorderRef.current!.stop();
@@ -248,10 +130,6 @@ export function useAudioRecorder({
       await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
     }
 
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({ type: 'audio_end' }));
-    }
-
     return uri;
   }, []);
 
@@ -259,7 +137,6 @@ export function useAudioRecorder({
     setRecordingState('idle');
     setMetering(0);
     setFinalUri(null);
-    lastFileSizeRef.current = 0;
     webChunksRef.current = [];
   }, []);
 

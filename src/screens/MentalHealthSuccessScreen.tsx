@@ -27,7 +27,7 @@ export default function MentalHealthSuccessScreen({ navigation }: Props) {
           Tus datos han sido registrados exitosamente. Te hemos enviado un correo confirmando la recepción.
         </Text>
       </View>
-      
+
       <View style={styles.footer}>
         <TouchableOpacity style={styles.button} onPress={handleClose} activeOpacity={0.8}>
           <Text style={styles.buttonText}>Volver al Inicio</Text>
