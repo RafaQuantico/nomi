@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { DashboardData } from '../services/webhookService';
 
 interface Props {
   data: DashboardData[];
-  threshold?: number; // Puntaje mínimo para entrar en un círculo
+  threshold?: number;
 }
 
 function getScore(answer?: string | number): number {
@@ -17,21 +17,30 @@ function getScore(answer?: string | number): number {
 }
 
 export const VennDiagram: React.FC<Props> = ({ data, threshold = 2 }) => {
-  const counts = useMemo(() => {
-    let A = 0, B = 0, C = 0; // Solo uno
-    let AB = 0, AC = 0, BC = 0; // Intersecciones de a dos
-    let ABC = 0; // Intersección de los tres
+  const [hoveredCircle, setHoveredCircle] = useState<string | null>(null);
+
+  const { counts, percentages, totalValid } = useMemo(() => {
+    let A = 0, B = 0, C = 0;
+    let AB = 0, AC = 0, BC = 0;
+    let ABC = 0;
     let none = 0;
 
+    let totalA = 0; // Total Depresión
+    let totalB = 0; // Total Ansiedad
+    let totalC = 0; // Total Estrés
+
     data.forEach(item => {
-      // Las preguntas en la planilla suelen estar mapeadas así según el script
       const animo = getScore(item.q1) + getScore(item.q2);
       const ansiedad = getScore(item.q3) + getScore(item.q4);
       const sobrecarga = getScore(item.q5) + getScore(item.q6);
 
-      const hasA = animo >= threshold; // Depresión / Ánimo
-      const hasB = ansiedad >= threshold; // Ansiedad
-      const hasC = sobrecarga >= threshold; // Estrés / Sobrecarga
+      const hasA = animo >= threshold;
+      const hasB = ansiedad >= threshold;
+      const hasC = sobrecarga >= threshold;
+
+      if (hasA) totalA++;
+      if (hasB) totalB++;
+      if (hasC) totalC++;
 
       if (hasA && hasB && hasC) ABC++;
       else if (hasA && hasB) AB++;
@@ -43,64 +52,159 @@ export const VennDiagram: React.FC<Props> = ({ data, threshold = 2 }) => {
       else none++;
     });
 
-    return { A, B, C, AB, AC, BC, ABC, none };
+    const total = data.length;
+    const percentages = {
+      A: total > 0 ? Math.round((totalA / total) * 100) : 0,
+      B: total > 0 ? Math.round((totalB / total) * 100) : 0,
+      C: total > 0 ? Math.round((totalC / total) * 100) : 0,
+      none: total > 0 ? Math.round((none / total) * 100) : 0,
+    };
+
+    return { 
+      counts: { A, B, C, AB, AC, BC, ABC, none, totalA, totalB, totalC },
+      percentages,
+      totalValid: total
+    };
   }, [data, threshold]);
 
+  const renderDescription = () => {
+    switch (hoveredCircle) {
+      case 'A':
+        return `Depresión: ${counts.totalA} estudiantes reportan síntomas frecuentes de desánimo o tristeza.`;
+      case 'B':
+        return `Ansiedad: ${counts.totalB} estudiantes reportan nerviosismo o preocupación recurrente.`;
+      case 'C':
+        return `Estrés: ${counts.totalC} estudiantes reportan alta sobrecarga o dificultad para relajarse.`;
+      case 'ABC':
+        return `Malestar Emocional: ${counts.ABC} estudiantes presentan las 3 dimensiones de riesgo simultáneamente. Requieren atención prioritaria.`;
+      default:
+        return 'Pasa el cursor sobre los círculos para ver más detalles.';
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={styles.wrapper}>
       <Text style={styles.title}>Salud mental en usuarios</Text>
       <Text style={styles.subtitle}>Superposición de dimensiones de riesgo</Text>
-      
-      <View style={styles.diagramContainer}>
-        {/* Círculo A - Depresión */}
-        <View style={[styles.circle, styles.circleA]} />
-        <Text style={[styles.label, styles.labelA]}>DEPRESIÓN</Text>
-        
-        {/* Círculo B - Ansiedad */}
-        <View style={[styles.circle, styles.circleB]} />
-        <Text style={[styles.label, styles.labelB]}>ANSIEDAD</Text>
-        
-        {/* Círculo C - Estrés */}
-        <View style={[styles.circle, styles.circleC]} />
-        <Text style={[styles.label, styles.labelC]}>ESTRÉS</Text>
 
-        {/* Conteos puros */}
-        <Text style={[styles.count, styles.countA]}>{counts.A > 0 ? counts.A : ''}</Text>
-        <Text style={[styles.count, styles.countB]}>{counts.B > 0 ? counts.B : ''}</Text>
-        <Text style={[styles.count, styles.countC]}>{counts.C > 0 ? counts.C : ''}</Text>
-        
-        {/* Intersecciones de a 2 */}
-        <Text style={[styles.count, styles.countAB]}>{counts.AB > 0 ? counts.AB : ''}</Text>
-        <Text style={[styles.count, styles.countAC]}>{counts.AC > 0 ? counts.AC : ''}</Text>
-        <Text style={[styles.count, styles.countBC]}>{counts.BC > 0 ? counts.BC : ''}</Text>
-        
-        {/* Centro (Los 3) */}
-        <View style={styles.countABCContainer}>
-            <Text style={styles.countABC}>{counts.ABC > 0 ? counts.ABC : '0'}</Text>
-            <Text style={styles.labelABC}>Malestar{"\n"}General</Text>
+      <View style={styles.contentRow}>
+        {/* Lado Izquierdo: Diagrama de Venn */}
+        <View style={styles.diagramSection}>
+          <View style={styles.diagramContainer}>
+            {/* Círculos Interactivos */}
+            <Pressable 
+              style={[styles.circle, styles.circleA, hoveredCircle === 'A' && styles.circleHovered]}
+              //@ts-ignore
+              onHoverIn={() => setHoveredCircle('A')} onHoverOut={() => setHoveredCircle(null)}
+            />
+            <Text style={[styles.label, styles.labelA]} pointerEvents="none">DEPRESIÓN</Text>
+            
+            <Pressable 
+              style={[styles.circle, styles.circleB, hoveredCircle === 'B' && styles.circleHovered]}
+              //@ts-ignore
+              onHoverIn={() => setHoveredCircle('B')} onHoverOut={() => setHoveredCircle(null)}
+            />
+            <Text style={[styles.label, styles.labelB]} pointerEvents="none">ANSIEDAD</Text>
+            
+            <Pressable 
+              style={[styles.circle, styles.circleC, hoveredCircle === 'C' && styles.circleHovered]}
+              //@ts-ignore
+              onHoverIn={() => setHoveredCircle('C')} onHoverOut={() => setHoveredCircle(null)}
+            />
+            <Text style={[styles.label, styles.labelC]} pointerEvents="none">ESTRÉS</Text>
+
+            {/* Conteos puros */}
+            <Text style={[styles.count, styles.countA]} pointerEvents="none">{counts.A > 0 ? counts.A : ''}</Text>
+            <Text style={[styles.count, styles.countB]} pointerEvents="none">{counts.B > 0 ? counts.B : ''}</Text>
+            <Text style={[styles.count, styles.countC]} pointerEvents="none">{counts.C > 0 ? counts.C : ''}</Text>
+            
+            {/* Intersecciones de a 2 */}
+            <Text style={[styles.count, styles.countAB]} pointerEvents="none">{counts.AB > 0 ? counts.AB : ''}</Text>
+            <Text style={[styles.count, styles.countAC]} pointerEvents="none">{counts.AC > 0 ? counts.AC : ''}</Text>
+            <Text style={[styles.count, styles.countBC]} pointerEvents="none">{counts.BC > 0 ? counts.BC : ''}</Text>
+            
+            {/* Centro (Los 3) */}
+            <Pressable 
+              style={styles.countABCContainer}
+              //@ts-ignore
+              onHoverIn={() => setHoveredCircle('ABC')} onHoverOut={() => setHoveredCircle(null)}
+            >
+                <Text style={styles.countABC}>{counts.ABC > 0 ? counts.ABC : '0'}</Text>
+                <Text style={styles.labelABC}>Malestar{"\n"}Emocional</Text>
+            </Pressable>
+          </View>
+          
+          <View style={styles.hoverInfoBox}>
+            <Text style={styles.hoverInfoText}>{renderDescription()}</Text>
+          </View>
         </View>
-      </View>
 
-      {/* Leyenda aclaratoria */}
-      <View style={styles.legendContainer}>
-        <Text style={styles.legendText}>
-          * Se considera un usuario dentro de un círculo si su puntaje en la dimensión es ≥ {threshold}.
-        </Text>
-        <Text style={styles.legendText}>
-          Fuera del gráfico: <Text style={{fontWeight: 'bold'}}>{counts.none}</Text> usuarios sin riesgo significativo.
-        </Text>
+        {/* Lado Derecho: Porcentajes */}
+        <View style={styles.statsSection}>
+          <Text style={styles.statsTitle}>Porcentajes de Riesgo</Text>
+          
+          <View style={styles.statRow}>
+            <View style={styles.statHeader}>
+              <View style={[styles.statDot, { backgroundColor: '#3b82f6' }]} />
+              <Text style={styles.statLabel}>Depresión</Text>
+              <Text style={styles.statValue}>{percentages.A}%</Text>
+            </View>
+            <View style={styles.barTrack}>
+              <View style={[styles.barFill, { width: `${percentages.A}%` as any, backgroundColor: '#3b82f6' }]} />
+            </View>
+          </View>
+
+          <View style={styles.statRow}>
+            <View style={styles.statHeader}>
+              <View style={[styles.statDot, { backgroundColor: '#10b981' }]} />
+              <Text style={styles.statLabel}>Ansiedad</Text>
+              <Text style={styles.statValue}>{percentages.B}%</Text>
+            </View>
+            <View style={styles.barTrack}>
+              <View style={[styles.barFill, { width: `${percentages.B}%` as any, backgroundColor: '#10b981' }]} />
+            </View>
+          </View>
+
+          <View style={styles.statRow}>
+            <View style={styles.statHeader}>
+              <View style={[styles.statDot, { backgroundColor: '#f59e0b' }]} />
+              <Text style={styles.statLabel}>Estrés</Text>
+              <Text style={styles.statValue}>{percentages.C}%</Text>
+            </View>
+            <View style={styles.barTrack}>
+              <View style={[styles.barFill, { width: `${percentages.C}%` as any, backgroundColor: '#f59e0b' }]} />
+            </View>
+          </View>
+
+          <View style={[styles.statRow, { marginTop: 10 }]}>
+            <View style={styles.statHeader}>
+              <View style={[styles.statDot, { backgroundColor: '#9ca3af' }]} />
+              <Text style={styles.statLabel}>Sin riesgo significativo</Text>
+              <Text style={styles.statValue}>{percentages.none}%</Text>
+            </View>
+          </View>
+
+          <View style={styles.legendContainer}>
+            <Text style={styles.legendText}>
+              Total analizados: {totalValid}
+            </Text>
+            <Text style={styles.legendText}>
+              * Los alumnos pueden estar en múltiples categorías.
+            </Text>
+          </View>
+        </View>
+
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
+  wrapper: {
+    padding: 24,
     backgroundColor: '#fff',
     borderRadius: 24,
     marginVertical: 20,
-    alignItems: 'center',
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 16,
@@ -114,13 +218,20 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#111',
     marginBottom: 6,
-    textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
     color: '#666',
     marginBottom: 30,
-    textAlign: 'center',
+  },
+  contentRow: {
+    flexDirection: Dimensions.get('window').width > 700 ? 'row' : 'column',
+    alignItems: 'flex-start',
+    gap: 40,
+  },
+  diagramSection: {
+    alignItems: 'center',
+    flex: 1,
   },
   diagramContainer: {
     width: 300,
@@ -132,6 +243,14 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
+    transition: 'all 0.2s ease',
+  },
+  circleHovered: {
+    transform: [{ scale: 1.05 }],
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
   },
   circleA: { 
     left: 10,
@@ -189,10 +308,12 @@ const styles = StyleSheet.create({
   
   countABCContainer: {
     position: 'absolute',
-    left: 125,
+    left: 120,
     top: 125,
     alignItems: 'center',
-    width: 50,
+    width: 60,
+    zIndex: 20,
+    padding: 5,
   },
   countABC: {
     fontSize: 22,
@@ -207,17 +328,80 @@ const styles = StyleSheet.create({
     marginTop: -2,
     lineHeight: 10,
   },
+  hoverInfoBox: {
+    marginTop: 10,
+    padding: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 8,
+    minHeight: 60,
+    width: '100%',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  hoverInfoText: {
+    fontSize: 13,
+    color: '#334155',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  statsSection: {
+    flex: 1,
+    minWidth: 250,
+    backgroundColor: '#f8fafc',
+    padding: 20,
+    borderRadius: 16,
+  },
+  statsTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111',
+    marginBottom: 16,
+  },
+  statRow: {
+    marginBottom: 16,
+  },
+  statHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  statDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
+  },
+  statLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#334155',
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  barTrack: {
+    height: 8,
+    backgroundColor: '#e2e8f0',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  barFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
   legendContainer: {
     marginTop: 20,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    width: '100%',
+    borderTopColor: '#e2e8f0',
   },
   legendText: {
     fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
+    color: '#64748b',
     marginBottom: 4,
   }
 });
