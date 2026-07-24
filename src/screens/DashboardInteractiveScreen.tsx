@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, ScrollView, To
 import { fetchDashboardData, DashboardData } from '../services/webhookService';
 import { VennDiagram } from '../components/VennDiagram';
 import { TrendChart } from '../components/TrendChart';
+import { SemanticClusterChart } from '../components/SemanticClusterChart';
 
 export default function DashboardInteractiveScreen() {
   const [data, setData] = useState<DashboardData[]>([]);
@@ -195,26 +196,13 @@ export default function DashboardInteractiveScreen() {
           <TrendChart data={data} threshold={2} />
         )}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Análisis de Respuestas Abiertas</Text>
-          <Text style={styles.sectionSubtitle}>Conceptos más repetidos en el grupo seleccionado:</Text>
-          
-          <View style={styles.tagsContainer}>
-            {frequentWords.length > 0 ? (
-              frequentWords.map(([word, count]) => (
-                <View key={word} style={styles.tag}>
-                  <Text style={styles.tagText}>{word}</Text>
-                  <View style={styles.tagBadge}>
-                    <Text style={styles.tagBadgeText}>{count}</Text>
-                  </View>
-                </View>
-              ))
-            ) : (
-              <Text style={{ color: '#888' }}>No hay suficientes datos de texto.</Text>
-            )}
-          </View>
-        </View>
-
+        {/* --- NUEVO ANÁLISIS SEMÁNTICO DE CLUSTERS --- */}
+        {filteredData.length > 0 && (
+          <>
+            <SemanticClusterChart data={filteredData} mode="general" />
+            <SemanticClusterChart data={filteredData} mode="comparison" />
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
