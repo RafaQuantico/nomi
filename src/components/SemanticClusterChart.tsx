@@ -258,7 +258,7 @@ export const SemanticClusterChart: React.FC<Props> = ({ data, mode }) => {
             })}
 
             {/* Etiquetas flotantes */}
-            {mode === 'general' && clusterStats.map(stat => {
+            {clusterStats.map(stat => {
               const center = centers[stat.cluster.id];
               // Offset labels depending on their center so they don't overlap nodes as much
               let offsetX = -30;
