@@ -43,7 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           throw new Error('Sesión inválida');
         }
-      }
     } catch {
       await AsyncStorage.multiRemove(['uuid', 'passkey', 'nickname', 'email']);
     } finally {
