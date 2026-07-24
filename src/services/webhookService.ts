@@ -206,10 +206,11 @@ export interface DashboardData {
 
 export async function fetchDashboardData(): Promise<DashboardData[]> {
   try {
-    const url = `${APPS_SCRIPT_URL}?action=get_dashboard_data`;
-    // We cannot use 'no-cors' here because we need to read the JSON response.
-    // The Apps Script must support CORS or we just use normal fetch.
-    const response = await fetch(url, {
+    // Para el dashboard usamos la URL directa de Google Apps Script. 
+    // Las peticiones GET de Apps Script (doGet) ya devuelven los headers CORS automáticamente si se devuelve ContentService.MimeType.JSON
+    // Esto evita pasar por el proxy de Vercel y tener problemas de "Empty body received" por reescritura de peticiones.
+    const directUrl = 'https://script.google.com/macros/s/AKfycbzuckGDrAO4FXJvhTS08XbYDQyGmiVS-masTb7Ov3lHu8sDZpOV8_vpudET0b7NXkZe/exec?action=get_dashboard_data';
+    const response = await fetch(directUrl, {
       method: 'GET',
     });
     
