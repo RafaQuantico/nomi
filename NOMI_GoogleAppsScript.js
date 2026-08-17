@@ -66,43 +66,62 @@ function doGet(e) {
     
     // Función para mapear
     function mapSheetData(data, defaultTarget) {
-      if (!data || data.length <= 1) return [];
+      if (!data || data.length === 0) return [];
       
       const headers = data[0];
-      const targetCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('público'));
-      const responseCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('escrita'));
-      const routeCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('ruta'));
+      const isFirstRowData = headers[0] && headers[0].toString().includes('@');
       
-      // Nuevas columnas demográficas (tolerante a la posición)
-      const sexoCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('sexo'));
-      const edadCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('edad'));
-      const cursoCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('curso'));
-      const comunaCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('comuna'));
+      let targetCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('público'));
+      let responseCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('escrita'));
+      let routeCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('ruta'));
       
-      // Buscar columnas de preguntas P1 a P6
-      const p1Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p1:'));
-      const p2Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p2:'));
-      const p3Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p3:'));
-      const p4Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p4:'));
-      const p5Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p5:'));
-      const p6Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p6:'));
+      let sexoCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('sexo'));
+      let edadCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('edad'));
+      let cursoCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('curso'));
+      let comunaCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('comuna'));
       
-      const rows = data.slice(1);
+      let p1Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p1:'));
+      let p2Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p2:'));
+      let p3Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p3:'));
+      let p4Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p4:'));
+      let p5Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p5:'));
+      let p6Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p6:'));
+      
+      // Fallback a índices fijos si no encuentra cabeceras claras o la primera fila es dato
+      if (isFirstRowData || targetCol === -1 || sexoCol === -1) {
+        targetCol = 2;
+        sexoCol = 3;
+        edadCol = 4;
+        cursoCol = 5;
+        comunaCol = 6;
+        p1Col = 7;
+        p2Col = 8;
+        p3Col = 9;
+        p4Col = 10;
+        p5Col = 11;
+        p6Col = 12;
+        responseCol = 13;
+        // routeCol = la penúltima o última, pero podemos inferirla si no está. En el array original route era col 14
+        routeCol = 18; 
+      }
+      
+      const rows = isFirstRowData ? data : data.slice(1);
+      
       return rows.map(row => {
         return {
-          target: targetCol >= 0 ? (row[targetCol] || defaultTarget) : defaultTarget,
-          textResponse: responseCol >= 0 ? (row[responseCol] || '') : '',
-          route: routeCol >= 0 ? (row[routeCol] || 'Sin clasificar') : 'Sin clasificar',
-          sexo: sexoCol >= 0 ? (row[sexoCol] || '') : '',
-          edad: edadCol >= 0 ? (row[edadCol] || '') : '',
-          curso: cursoCol >= 0 ? (row[cursoCol] || '') : '',
-          comuna: comunaCol >= 0 ? (row[comunaCol] || '') : '',
-          q1: p1Col >= 0 ? (row[p1Col] || '') : '',
-          q2: p2Col >= 0 ? (row[p2Col] || '') : '',
-          q3: p3Col >= 0 ? (row[p3Col] || '') : '',
-          q4: p4Col >= 0 ? (row[p4Col] || '') : '',
-          q5: p5Col >= 0 ? (row[p5Col] || '') : '',
-          q6: p6Col >= 0 ? (row[p6Col] || '') : ''
+          target: targetCol >= 0 && targetCol < row.length ? (row[targetCol] || defaultTarget) : defaultTarget,
+          textResponse: responseCol >= 0 && responseCol < row.length ? (row[responseCol] || '') : '',
+          route: routeCol >= 0 && routeCol < row.length ? (row[routeCol] || 'Sin clasificar') : 'Sin clasificar',
+          sexo: sexoCol >= 0 && sexoCol < row.length ? (row[sexoCol] || '') : '',
+          edad: edadCol >= 0 && edadCol < row.length ? (row[edadCol] || '') : '',
+          curso: cursoCol >= 0 && cursoCol < row.length ? (row[cursoCol] || '') : '',
+          comuna: comunaCol >= 0 && comunaCol < row.length ? (row[comunaCol] || '') : '',
+          q1: p1Col >= 0 && p1Col < row.length ? (row[p1Col] || 0) : 0,
+          q2: p2Col >= 0 && p2Col < row.length ? (row[p2Col] || 0) : 0,
+          q3: p3Col >= 0 && p3Col < row.length ? (row[p3Col] || 0) : 0,
+          q4: p4Col >= 0 && p4Col < row.length ? (row[p4Col] || 0) : 0,
+          q5: p5Col >= 0 && p5Col < row.length ? (row[p5Col] || 0) : 0,
+          q6: p6Col >= 0 && p6Col < row.length ? (row[p6Col] || 0) : 0
         };
       });
     }
@@ -249,13 +268,8 @@ function handleWelcomeEmail(data) {
         <h2 style="font-size: 16px; font-weight: 800; color: #000; margin: 0 0 16px;">Instrucciones</h2>
         <ol style="margin: 0; padding-left: 20px; color: #333; font-size: 14px; line-height: 1.8;">
           <li>Selecciona si estás <strong>Activo</strong> (inicio de jornada) o <strong>Cansado</strong> (fin de jornada).</li>
-          <li>El test consta de <strong>3 grabaciones cortas</strong>:</li>
-          <ul>
-            <li><strong>Vocal A:</strong> Sostén la vocal "A" durante 5 segundos.</li>
-            <li><strong>Frase:</strong> Di "El rápido zorro marrón salta sobre el perro perezoso."</li>
-            <li><strong>Desayuno:</strong> Describe brevemente qué desayunaste hoy.</li>
-          </ul>
           <li>Busca un lugar <strong>tranquilo y silencioso</strong> para hacer el test.</li>
+          <li>Contesta lo que te pregunta Nomi.</li>
           <li>Habla en un tono de <strong>voz normal</strong>, sin gritar ni susurrar.</li>
         </ol>
       </div>
@@ -441,6 +455,7 @@ function handleMentalHealthCompleted(data) {
     // Guardar fila en el excel (agregué el puntaje total, la ruta y el audio inicial a la tabla)
     var row = [
       data.email, data.nickname, data.target || 'escolar',
+      data.sexo || "", data.edad || "", data.curso || "", data.comuna || "",
       data.answers[0] || "", data.answers[1] || "", data.answers[2] || "",
       data.answers[3] || "", data.answers[4] || "", data.answers[5] || "",
       data.textResponse || "", initialAudioUrl, audioUrl, data.completedAt,
