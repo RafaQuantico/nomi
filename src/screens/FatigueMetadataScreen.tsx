@@ -45,6 +45,7 @@ export default function FatigueMetadataScreen({ navigation }: Props) {
     setIsSubmitting(true);
     try {
       // API call to save metadata
+
       const response = await fetch("https://nomi-app-web.vercel.app/api/webhook", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -59,15 +60,18 @@ export default function FatigueMetadataScreen({ navigation }: Props) {
         })
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to save metadata");
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok || (result && result.ok === false)) {
+        throw new Error((result && result.error) ? result.error : "Failed to save metadata");
       }
 
       await AsyncStorage.setItem(`@nomi_fatigue_metadata_${user?.uuid}`, "true");
       navigation.replace("TestSetup");
+
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "Hubo un problema guardando tus datos. Intenta nuevamente.");
+      Alert.alert("Error", error instanceof Error ? error.message : "Hubo un problema guardando tus datos. Intenta nuevamente.");
     } finally {
       setIsSubmitting(false);
     }
