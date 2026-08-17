@@ -166,6 +166,7 @@ function doPost(e) {
     if (data.action === 'mental_health_completed') return handleMentalHealthCompleted(data);
     if (data.action === 'register_user') return handleRegisterUser(data);
     if (data.action === 'login_user') return handleLoginUser(data);
+    if (data.action === 'save_fatigue_metadata') return handleSaveMetadata(data);
 
     return ContentService.createTextOutput(
       JSON.stringify({ ok: false, error: 'Unknown action: ' + data.action })
