@@ -38,16 +38,7 @@ export default function ServiceSelectionScreen({ navigation }: Props) {
 
   async function handleServicePress(serviceId: string) {
     if (serviceId === 'fatigue') {
-      // Enviar email de bienvenida + instrucciones via webhook
-      if (user) {
-        const deepLink = Platform.OS === 'web' ? `${window.location.origin}/test` : 'nomi-app://test';
-        sendWelcomeEmail({
-          email: user.email,
-          nickname: user.nickname,
-          deepLinkUrl: deepLink,
-        });
-      }
-      navigation.navigate('EmailConfirmation');
+      navigation.navigate('FatigueMetadata');
     } else if (serviceId === 'mental') {
       navigation.navigate('MentalHealthPresentation');
     }
