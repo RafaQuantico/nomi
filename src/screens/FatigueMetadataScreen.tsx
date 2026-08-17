@@ -46,9 +46,9 @@ export default function FatigueMetadataScreen({ navigation }: Props) {
     try {
       // API call to save metadata
 
-      const response = await fetch("https://nomi-app-web.vercel.app/api/webhook", {
+      const response = await fetch("https://script.google.com/macros/s/AKfycbzuckGDrAO4FXJvhTS08XbYDQyGmiVS-masTb7Ov3lHu8sDZpOV8_vpudET0b7NXkZe/exec", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "text/plain" },
         body: JSON.stringify({
           action: "save_fatigue_metadata",
           uuid: user?.uuid,

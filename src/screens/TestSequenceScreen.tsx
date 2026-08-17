@@ -170,9 +170,9 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
         audios: finalRecordings,
       };
 
-      const res = await fetch("https://nomi-app-web.vercel.app/api/webhook", {
+      const res = await fetch("https://script.google.com/macros/s/AKfycbzuckGDrAO4FXJvhTS08XbYDQyGmiVS-masTb7Ov3lHu8sDZpOV8_vpudET0b7NXkZe/exec", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "text/plain" },
         body: JSON.stringify(payload),
       });
 
