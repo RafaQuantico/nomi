@@ -292,19 +292,20 @@ function handleWelcomeEmail(data) {
 // ACCIÓN: Guardar audios en Drive + fila en Sheets + email confirmación
 // -------------------------------------------------------
 function handleTestCompleted(data) {
-  const { email, nickname, uuid, eventPhase, completedAt, audios } = data;
+  const { email, nickname, uuid, eventPhase, completedAt, audios, samnPerelli } = data;
   const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
   const userFolder = getOrCreateSubfolder(folder, `${nickname} (${uuid.slice(0, 8)})`);
-  const dateStr = new Date(completedAt).toLocaleString('es-CL');
+  
+  const d = new Date(completedAt);
+  const dateStr = d.toLocaleDateString('es-CL');
+  const timeStr = d.toLocaleTimeString('es-CL');
   const driveLinks = [];
 
   if (audios && audios.length > 0) {
     audios.forEach((audio) => {
       try {
-        let extension = '.m4a';
-        if (audio.mimeType === 'audio/webm') extension = '.webm';
-        else if (audio.mimeType === 'audio/mp4') extension = '.mp4';
-        const decoded = Utilities.newBlob(Utilities.base64Decode(audio.base64), audio.mimeType || 'audio/m4a', `${audio.label}${extension}`);
+        let extension = '.wav';
+        const decoded = Utilities.newBlob(Utilities.base64Decode(audio.base64), audio.mimeType || 'audio/wav', `${audio.label}${extension}`);
         const file = userFolder.createFile(decoded);
         file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
         driveLinks.push({ label: audio.label, url: file.getUrl() });
@@ -315,24 +316,38 @@ function handleTestCompleted(data) {
   }
 
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
-  const sheet = doc.getSheetByName(TAB_FATIGA);
+  const sheetName = `Fatiga_${nickname}_${uuid.slice(0, 8)}`;
+  let sheet = doc.getSheetByName(sheetName);
   
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Fecha', 'Nombre', 'Email', 'UUID', 'Fase', 'Audio 1 - Vocal A', 'Audio 2 - Frase', 'Audio 3 - Desayuno']);
-    sheet.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#000').setFontColor('#fff');
-    sheet.setFrozenRows(1);
+  if (!sheet) {
+    sheet = doc.insertSheet(sheetName);
+    sheet.getRange(5, 1, 1, 6).setValues([['Fecha', 'Hora', 'Fase', 'Escala Samn-Perelli', 'Audio Frase', 'Audio Abierta']]);
+    sheet.getRange(5, 1, 1, 6).setFontWeight('bold').setBackground('#000').setFontColor('#fff');
+    sheet.setFrozenRows(5);
   }
-  sheet.appendRow([dateStr, nickname, email, uuid, eventPhase === 'activo' ? 'Activo (PRE)' : 'Cansado (POST)', driveLinks[0]?.url || 'No subido', driveLinks[1]?.url || 'No subido', driveLinks[2]?.url || 'No subido']);
+  
+  let lastRow = sheet.getLastRow();
+  if (lastRow < 5) lastRow = 5;
+  
+  sheet.getRange(lastRow + 1, 1, 1, 6).setValues([[
+    dateStr, 
+    timeStr, 
+    eventPhase === 'activo' ? 'Activo (AM)' : 'Cansado (PM)', 
+    samnPerelli || 'No registrada',
+    driveLinks[0]?.url || 'No subido', 
+    driveLinks[1]?.url || 'No subido'
+  ]]);
 
   const confirmSubject = `${APP_NAME} — ¡Tu test fue recibido!`;
   const confirmHtml = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; background: #fff; padding: 40px 32px;">
       <h1 style="font-size: 24px; font-weight: 900; color: #000; margin: 0 0 16px;">Test completado, ${nickname}</h1>
-      <p style="font-size: 15px; color: #555; margin: 0 0 20px;">Recibimos tus 3 grabaciones de voz correctamente.</p>
+      <p style="font-size: 15px; color: #555; margin: 0 0 20px;">Recibimos tus grabaciones de voz correctamente.</p>
       <div style="background: #f5f5f5; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
         <p style="margin: 0 0 8px; font-size: 13px; color: #666;"><strong>Resumen del test:</strong></p>
-        <p style="margin: 0; font-size: 14px; color: #333;">Fecha: ${dateStr}</p>
+        <p style="margin: 0; font-size: 14px; color: #333;">Fecha: ${dateStr} ${timeStr}</p>
         <p style="margin: 4px 0 0; font-size: 14px; color: #333;">Etapa: ${eventPhase === 'activo' ? 'Activo (inicio de jornada)' : 'Cansado (fin de jornada)'}</p>
+        <p style="margin: 4px 0 0; font-size: 14px; color: #333;">Nivel de Fatiga: ${samnPerelli || 'No registrada'}</p>
       </div>
       <p style="font-size: 12px; color: #aaa; text-align: center; margin: 0;">Gracias por participar en el programa NOMI.</p>
     </div>
@@ -340,6 +355,65 @@ function handleTestCompleted(data) {
   GmailApp.sendEmail(email, confirmSubject, '', { htmlBody: confirmHtml, name: FROM_NAME, bcc: ADMIN_NOTIFICATION_EMAIL });
   return ContentService.createTextOutput(JSON.stringify({ ok: true, message: 'Test saved and confirmation sent', links: driveLinks })).setMimeType(ContentService.MimeType.JSON);
 }
+
+// -------------------------------------------------------
+// ACCIÓN: GUARDAR METADATOS DE FATIGA
+// -------------------------------------------------------
+function handleSaveMetadata(data) {
+  const { uuid, nickname, sex, age, weight, height } = data;
+  const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
+  const sheetName = `Fatiga_${nickname}_${uuid.slice(0, 8)}`;
+  let sheet = doc.getSheetByName(sheetName);
+  
+  if (!sheet) {
+    sheet = doc.insertSheet(sheetName);
+    sheet.getRange(5, 1, 1, 6).setValues([['Fecha', 'Hora', 'Fase', 'Escala Samn-Perelli', 'Audio Frase', 'Audio Abierta']]);
+    sheet.getRange(5, 1, 1, 6).setFontWeight('bold').setBackground('#000').setFontColor('#fff');
+    sheet.setFrozenRows(5);
+  }
+  
+  sheet.getRange(1, 1, 1, 4).setValues([['Sexo', 'Edad', 'Peso (kg)', 'Estatura (cm)']]);
+  sheet.getRange(1, 1, 1, 4).setFontWeight('bold').setBackground('#f5f5f5');
+  sheet.getRange(2, 1, 1, 4).setValues([[sex, age, weight, height]]);
+  
+  return ContentService.createTextOutput(JSON.stringify({ ok: true, message: 'Metadata saved' })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// -------------------------------------------------------
+// TRIGGERS (CRON JOBS): RECORDATORIOS AM/PM
+// -------------------------------------------------------
+function sendFatigueReminders() {
+  const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
+  const usersSheet = doc.getSheetByName(TAB_REGISTRO);
+  if (!usersSheet) return;
+  
+  const data = usersSheet.getDataRange().getValues();
+  const hour = new Date().getHours();
+  let phase = '';
+  if (hour >= 9 && hour <= 12) phase = 'AM (Inicio de Jornada)';
+  else if (hour >= 18 && hour <= 21) phase = 'PM (Fin de Jornada)';
+  else return; 
+  
+  for (let i = 1; i < data.length; i++) {
+    const email = data[i][3];
+    const nickname = data[i][2];
+    if (!email) continue;
+    
+    const subject = `NOMI — Recordatorio de Test de Fatiga ${phase.substring(0,2)}`;
+    const htmlBody = `
+      <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; background: #fff; padding: 30px;">
+        <h2 style="color:#000;">Hola, ${nickname}</h2>
+        <p style="color:#555; font-size:15px;">Te recordamos que es momento de registrar tu voz para la medición <strong>${phase}</strong>.</p>
+        <p style="color:#555; font-size:15px;">Recuerda ubicarte en un lugar silencioso.</p>
+        <a href="https://nomi-app-web.vercel.app/test" style="display:inline-block; background:#000; color:#fff; text-decoration:none; padding:12px 24px; border-radius:8px; font-weight:bold; margin-top:20px;">Iniciar Test Ahora</a>
+      </div>
+    `;
+    try {
+      GmailApp.sendEmail(email, subject, '', { htmlBody: htmlBody, name: FROM_NAME });
+    } catch(e) {}
+  }
+}
+
 
 function getOrCreateSubfolder(parentFolder, name) {
   const existing = parentFolder.getFoldersByName(name);

@@ -9,6 +9,7 @@ import IntroScreen from './src/screens/IntroScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import ServiceSelectionScreen from './src/screens/ServiceSelectionScreen';
 import EmailConfirmationScreen from './src/screens/EmailConfirmationScreen';
+import FatigueMetadataScreen from './src/screens/FatigueMetadataScreen';
 import TestSetupScreen from './src/screens/TestSetupScreen';
 import TestSequenceScreen from './src/screens/TestSequenceScreen';
 import MentalHealthPresentationScreen from './src/screens/MentalHealthPresentationScreen';
@@ -29,8 +30,9 @@ export type RootStackParamList = {
   Auth: undefined;
   ServiceSelection: undefined;
   EmailConfirmation: undefined;
+  FatigueMetadata: undefined;
   TestSetup: undefined;
-  TestSequence: { eventPhase: 'activo' | 'cansado' };
+  TestSequence: { eventPhase: 'activo' | 'cansado'; samnPerelli: number };
   MentalHealthPresentation: undefined;
   MentalHealthTarget: undefined;
   MentalHealthMockupDisclaimer: { target: 'escolar' | 'universitario' };
@@ -81,6 +83,7 @@ function AppNavigator() {
       <Stack.Screen name="Auth" component={AuthScreen} />
       <Stack.Screen name="ServiceSelection" component={ServiceSelectionScreen} />
       <Stack.Screen name="EmailConfirmation" component={EmailConfirmationScreen} />
+      <Stack.Screen name="FatigueMetadata" component={FatigueMetadataScreen} />
       <Stack.Screen name="TestSetup" component={TestSetupScreen} />
       <Stack.Screen name="TestSequence" component={TestSequenceScreen} />
       <Stack.Screen name="MentalHealthPresentation" component={MentalHealthPresentationScreen} />
