@@ -68,3 +68,11 @@ Se compila a través de EAS (Expo Application Services) usando los comandos est�
 
 > **Nota para el Agente / Asistente de IA:** 
 > Si acabas de leer este archivo, ya estás al tanto del estado actual del proyecto. Recuerda que la adaptación para Web está en `nomi-app-web` y utiliza `MediaRecorder` de HTML5 en lugar de `expo-file-system`.
+
+### Actualizaciones del Módulo de Fatiga Vocal
+- **Hojas Dinámicas por Usuario:** Se actualizó `NOMI_GoogleAppsScript.js` para que cada usuario tenga su propia hoja de cálculo individual (`Fatiga_Nickname_UUID`), donde se registra secuencialmente su información de Metadata y sus pruebas de fatiga.
+- **Flujo Directo (Sin Correos Recurrentes):** Se modificó `ServiceSelectionScreen.tsx` para que al seleccionar "Fatiga", la app navegue directamente a la pantalla del test (`FatigueMetadataScreen`). El correo con las instrucciones de la prueba se envía de manera exclusiva una única vez durante la creación de cuenta en `AuthScreen.tsx`.
+- **Grabación de Audio en Formato WAV:** Se implementó la Web Audio API (`useWavRecorder.ts`) para capturar audios garantizados en formato `.wav` estándar (16-bit, 48 kHz).
+- **Validaciones de Tiempo de Grabación:** En la pregunta abierta final de fatiga, el usuario no puede avanzar ni subir su prueba si la grabación dura menos de 20 segundos.
+- **Nomenclatura Estructurada en Google Drive:** Al finalizar el test, la función `handleTestCompleted` procesa los audios y los sube a la carpeta del usuario en Google Drive nombrando los archivos bajo la convención: `YYYYMMDD_usuario_muestra_fase_paso.wav` (por ej. `20260817_juan_1_am_paso_1.wav`).
+- **Llamadas Webhook Directas (Sin Proxy Vercel):** Se reconfiguró `webhookService.ts` y las pantallas del módulo de fatiga para evitar pasar por el proxy `api/webhook.ts`. Las peticiones ahora se envían directamente a la URL de Google Apps Script usando cabeceras `Content-Type: text/plain` para sortear restricciones de CORS desde el cliente web.
