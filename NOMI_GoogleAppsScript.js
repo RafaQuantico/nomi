@@ -687,3 +687,89 @@ function handleMentalHealthCompleted(data) {
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
+
+
+// -------------------------------------------------------
+// RECORDATORIOS AUTOMÁTICOS
+// -------------------------------------------------------
+
+const FRONTEND_APP_URL = "https://nomi-app-web.vercel.app/metadata"; // <-- SI USAS OTRA URL EN PRODUCCIÓN, CÁMBIALA AQUÍ
+
+function sendMorningReminders() {
+  const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
+  const usersSheet = doc.getSheetByName(TAB_REGISTRO);
+  if (!usersSheet) return;
+  
+  const data = usersSheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    const nickname = data[i][2];
+    const email = data[i][3];
+    if (!email) continue;
+    
+    const subject = `${APP_NAME} — ¡Hora de tu test (Inicio de Jornada)!`;
+    const htmlBody = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; background: #fff; padding: 40px 32px;">
+        <h1 style="font-size: 24px; font-weight: 900; color: #000; margin: 0 0 16px;">Buen día, ${nickname}</h1>
+        <p style="font-size: 15px; color: #555; margin: 0 0 20px;">Es hora de registrar tu nivel de fatiga y voz al <strong>inicio de la jornada (Activo)</strong>.</p>
+        <div style="text-align: center; margin-bottom: 32px; margin-top: 32px;">
+          <a href="${FRONTEND_APP_URL}" style="display: inline-block; background: #000; color: #fff; text-decoration: none; font-size: 16px; font-weight: 800; padding: 16px 40px; border-radius: 12px;">Comenzar test ahora</a>
+        </div>
+      </div>
+    `;
+    try {
+      GmailApp.sendEmail(email, subject, '', { htmlBody, name: FROM_NAME });
+    } catch (e) {}
+  }
+}
+
+function sendEveningReminders() {
+  const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
+  const usersSheet = doc.getSheetByName(TAB_REGISTRO);
+  if (!usersSheet) return;
+  
+  const data = usersSheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    const nickname = data[i][2];
+    const email = data[i][3];
+    if (!email) continue;
+    
+    const subject = `${APP_NAME} — ¡Hora de tu test (Fin de Jornada)!`;
+    const htmlBody = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; background: #fff; padding: 40px 32px;">
+        <h1 style="font-size: 24px; font-weight: 900; color: #000; margin: 0 0 16px;">Buenas tardes, ${nickname}</h1>
+        <p style="font-size: 15px; color: #555; margin: 0 0 20px;">Es hora de registrar tu nivel de fatiga y voz al <strong>fin de la jornada (Cansado)</strong>.</p>
+        <div style="text-align: center; margin-bottom: 32px; margin-top: 32px;">
+          <a href="${FRONTEND_APP_URL}" style="display: inline-block; background: #000; color: #fff; text-decoration: none; font-size: 16px; font-weight: 800; padding: 16px 40px; border-radius: 12px;">Comenzar test ahora</a>
+        </div>
+      </div>
+    `;
+    try {
+      GmailApp.sendEmail(email, subject, '', { htmlBody, name: FROM_NAME });
+    } catch (e) {}
+  }
+}
+
+function setupDailyTriggers() {
+  // Eliminar triggers anteriores de estas funciones para no duplicar
+  const triggers = ScriptApp.getProjectTriggers();
+  for (let i = 0; i < triggers.length; i++) {
+    const handler = triggers[i].getHandlerFunction();
+    if (handler === 'sendMorningReminders' || handler === 'sendEveningReminders') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+
+  // Crear trigger para las 10 AM (aprox)
+  ScriptApp.newTrigger('sendMorningReminders')
+      .timeBased()
+      .atHour(10)
+      .everyDays(1)
+      .create();
+
+  // Crear trigger para las 19 PM (aprox)
+  ScriptApp.newTrigger('sendEveningReminders')
+      .timeBased()
+      .atHour(19)
+      .everyDays(1)
+      .create();
+}
