@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -29,6 +29,25 @@ export default function FatigueMetadataScreen({ navigation }: Props) {
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    async function checkMetadata() {
+      if (user?.uuid) {
+        try {
+          const hasMetadata = await AsyncStorage.getItem(`@nomi_fatigue_metadata_${user.uuid}`);
+          if (hasMetadata === "true") {
+            navigation.replace("TestSetup");
+            return;
+          }
+        } catch (e) {
+          console.error("Error al leer metadata flag", e);
+        }
+      }
+      setIsChecking(false);
+    }
+    checkMetadata();
+  }, [user, navigation]);
 
   const handleContinue = async () => {
     if (!sex || !age || !weight || !height) {
@@ -76,6 +95,14 @@ export default function FatigueMetadataScreen({ navigation }: Props) {
       setIsSubmitting(false);
     }
   };
+
+  if (isChecking) {
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color="#f59e0b" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
