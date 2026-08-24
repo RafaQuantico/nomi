@@ -308,8 +308,8 @@ function handleTestCompleted(data) {
   
   if (!sheet) {
     sheet = doc.insertSheet(sheetName);
-    sheet.getRange(5, 1, 1, 6).setValues([['Fecha', 'Hora', 'Fase', 'Escala Samn-Perelli', 'Audio Frase', 'Audio Abierta']]);
-    sheet.getRange(5, 1, 1, 6).setFontWeight('bold').setBackground('#000').setFontColor('#fff');
+    sheet.getRange(5, 1, 1, 8).setValues([['Fecha', 'Hora', 'Fase', 'Escala Samn-Perelli', 'Audio Frase', 'Audio Abierta', 'Consumió Sustancias', 'Tipo de Sustancia']]);
+    sheet.getRange(5, 1, 1, 8).setFontWeight('bold').setBackground('#000').setFontColor('#fff');
     sheet.setFrozenRows(5);
   }
   
@@ -339,13 +339,15 @@ function handleTestCompleted(data) {
     });
   }
 
-  sheet.getRange(lastRow + 1, 1, 1, 6).setValues([[
+  sheet.getRange(lastRow + 1, 1, 1, 8).setValues([[
     dateStr, 
     timeStr, 
     eventPhase === 'activo' ? 'Activo (AM)' : 'Cansado (PM)', 
     samnPerelli || 'No registrada',
     driveLinks[0]?.url || 'No subido', 
-    driveLinks[1]?.url || 'No subido'
+    driveLinks[1]?.url || 'No subido',
+    data.hasSubstance || 'No',
+    data.selectedSubstances || 'Ninguna'
   ]]);
 
   const confirmSubject = `${APP_NAME} — ¡Tu test fue recibido!`;
@@ -377,8 +379,8 @@ function handleSaveMetadata(data) {
   
   if (!sheet) {
     sheet = doc.insertSheet(sheetName);
-    sheet.getRange(5, 1, 1, 6).setValues([['Fecha', 'Hora', 'Fase', 'Escala Samn-Perelli', 'Audio Frase', 'Audio Abierta']]);
-    sheet.getRange(5, 1, 1, 6).setFontWeight('bold').setBackground('#000').setFontColor('#fff');
+    sheet.getRange(5, 1, 1, 8).setValues([['Fecha', 'Hora', 'Fase', 'Escala Samn-Perelli', 'Audio Frase', 'Audio Abierta', 'Consumió Sustancias', 'Tipo de Sustancia']]);
+    sheet.getRange(5, 1, 1, 8).setFontWeight('bold').setBackground('#000').setFontColor('#fff');
     sheet.setFrozenRows(5);
   }
   

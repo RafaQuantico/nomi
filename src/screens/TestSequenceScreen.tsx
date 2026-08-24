@@ -130,7 +130,7 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
           if (stepIndex < steps.length - 1) {
             setStepIndex(stepIndex + 1);
           } else {
-            submitAll(newRecordings);
+            navigation.replace("FatigueSubstance", { recordings: newRecordings, eventPhase, samnPerelli });
           }
         }, 1500);
       } else {
@@ -142,54 +142,6 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
     }
   };
 
-  const submitAll = async (finalRecordings: any[]) => {
-    setIsProcessing(true);
-    try {
-      const payload = {
-        action: "test_completed",
-        email: user?.email,
-        nickname: user?.nickname,
-        uuid: user?.uuid,
-        eventPhase: eventPhase,
-        samnPerelli: samnPerelli,
-        completedAt: new Date().toISOString(),
-        audios: finalRecordings,
-      };
-
-      const res = await fetch("https://script.google.com/macros/s/AKfycbzuckGDrAO4FXJvhTS08XbYDQyGmiVS-masTb7Ov3lHu8sDZpOV8_vpudET0b7NXkZe/exec", {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        setIsCompleted(true);
-      } else {
-        throw new Error("Error en webhook");
-      }
-    } catch (error) {
-      Alert.alert("Error", "No se pudo enviar el test.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  if (isCompleted) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.completedContainer}>
-          <View style={styles.completedIconCircle}>
-            <Feather name="check" size={48} color="#fff" />
-          </View>
-          <Text style={styles.completedTitle}>¡Test Completado!</Text>
-          <Text style={styles.completedBody}>Tus respuestas han sido enviadas de forma segura y confidencial. ¡Gracias por participar!</Text>
-          <TouchableOpacity style={styles.doneButton} onPress={() => navigation.navigate("ServiceSelection")}>
-            <Text style={styles.doneButtonText}>Volver al Inicio</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>
