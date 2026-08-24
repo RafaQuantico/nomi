@@ -18,19 +18,7 @@ import { useWavRecorder } from "../hooks/useWavRecorder";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TestSequence">;
 
-const AM_QUESTIONS = [
-  "¡Buenos días! Cuéntame, ¿cuál es tu objetivo principal para el turno de hoy y cómo planeas lograrlo?",
-  "Hola. Antes de empezar, descríbeme brevemente cómo te preparaste físicamente o mentalmente para venir al trabajo hoy.",
-  "¡Hola! Imagina que hoy será un turno excelente. ¿Qué cosas tendrían que pasar para que al salir sientas que fue un gran día?",
-  "Buen turno. ¿Hay alguna tarea o desafío particular que tengas que enfrentar hoy? Cuéntame un poco sobre ello."
-];
-
-const PM_QUESTIONS = [
-  "¡Buen trabajo hoy! Cuéntame en detalle, ¿cuál fue la parte más difícil o pesada de tu turno y cómo la superaste?",
-  "Hola de nuevo. Si pudieras retroceder el tiempo y repetir este turno, ¿hay algo que harías de manera diferente?",
-  "¡Terminaste! Describe brevemente una interacción o un momento que te haya llamado la atención durante el día de hoy.",
-  "Hola. Ya puedes descansar, pero antes cuéntame: ¿Qué fue lo más interesante que aprendiste o resolviste en tu turno?"
-];
+const OPEN_QUESTION = "Describa con el mayor detalle posible el lugar en el que se encuentra en este momento.";
 
 export default function TestSequenceScreen({ route, navigation }: Props) {
   const { eventPhase, samnPerelli } = route.params;
@@ -55,10 +43,8 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const qList = eventPhase === "activo" ? AM_QUESTIONS : PM_QUESTIONS;
-    const q = qList[Math.floor(Math.random() * qList.length)];
-    setDynamicQuestion(q);
-  }, [eventPhase]);
+    setDynamicQuestion(OPEN_QUESTION);
+  }, []);
 
   useEffect(() => {
     if (isRecording) {
