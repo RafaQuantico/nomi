@@ -285,7 +285,7 @@ function handleWelcomeEmail(data) {
       <p style="font-size: 12px; color: #aaa; text-align: center; margin: 0;">Este correo fue enviado por ${APP_NAME}. Si no solicitaste este test, ignora este mensaje.</p>
     </div>
   `;
-  GmailApp.sendEmail(email, subject, '', { htmlBody, name: FROM_NAME });
+  GmailApp.sendEmail(email, subject, '', { from: 'contacto@nomi.cl', htmlBody, name: FROM_NAME });
   return ContentService.createTextOutput(JSON.stringify({ ok: true, message: 'Welcome email sent' })).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -401,7 +401,7 @@ function handleTestCompleted(data) {
       <p style="font-size: 12px; color: #aaa; text-align: center; margin: 0;">Gracias por participar en el programa NOMI.</p>
     </div>
   `;
-  GmailApp.sendEmail(email, confirmSubject, '', { htmlBody: confirmHtml, name: FROM_NAME, bcc: ADMIN_NOTIFICATION_EMAIL });
+  GmailApp.sendEmail(email, confirmSubject, '', { from: 'contacto@nomi.cl', htmlBody: confirmHtml, name: FROM_NAME, bcc: ADMIN_NOTIFICATION_EMAIL });
   
   return ContentService.createTextOutput(JSON.stringify({ ok: true, message: 'Test saved and confirmation sent', links: driveLinks })).setMimeType(ContentService.MimeType.JSON);
 }
@@ -473,7 +473,7 @@ function sendFatigueReminders() {
       </div>
     `;
     try {
-      GmailApp.sendEmail(email, subject, '', { htmlBody: htmlBody, name: FROM_NAME });
+      GmailApp.sendEmail(email, subject, '', { from: 'contacto@nomi.cl', htmlBody: htmlBody, name: FROM_NAME });
     } catch(e) {}
   }
 }
@@ -724,6 +724,7 @@ function handleMentalHealthCompleted(data) {
 </html>`;
       
     GmailApp.sendEmail(data.email, subject, '', {
+      from: 'contacto@nomi.cl',
       htmlBody: emailHtml,
       name: FROM_NAME,
       bcc: ADMIN_NOTIFICATION_EMAIL
@@ -771,7 +772,7 @@ function sendMorningReminders() {
       </div>
     `;
     try {
-      GmailApp.sendEmail(email, subject, '', { htmlBody, name: FROM_NAME });
+      GmailApp.sendEmail(email, subject, '', { from: 'contacto@nomi.cl', htmlBody, name: FROM_NAME });
     } catch (e) {}
   }
 }
@@ -798,7 +799,7 @@ function sendEveningReminders() {
       </div>
     `;
     try {
-      GmailApp.sendEmail(email, subject, '', { htmlBody, name: FROM_NAME });
+      GmailApp.sendEmail(email, subject, '', { from: 'contacto@nomi.cl', htmlBody, name: FROM_NAME });
     } catch (e) {}
   }
 }
