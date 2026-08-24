@@ -289,66 +289,103 @@ function handleWelcomeEmail(data) {
   return ContentService.createTextOutput(JSON.stringify({ ok: true, message: 'Welcome email sent' })).setMimeType(ContentService.MimeType.JSON);
 }
 
+function hashUuidTo9Digits(uuid) {
+  let hash = 0;
+  if (!uuid) return 123456789;
+  for (let i = 0; i < uuid.length; i++) {
+    hash = ((hash << 5) - hash) + uuid.charCodeAt(i);
+    hash |= 0; 
+  }
+  return Math.abs(hash) % 900000000 + 100000000;
+}
+
 // -------------------------------------------------------
 // ACCIÓN: Guardar audios en Drive + fila en Sheets + email confirmación
 // -------------------------------------------------------
 function handleTestCompleted(data) {
-  const { email, nickname, uuid, eventPhase, completedAt, audios, samnPerelli } = data;
+  const { email, nickname, uuid, eventPhase, completedAt, audios, samnPerelli, testStartTime, hasSubstance, selectedSubstances } = data;
   const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
   const userFolder = getOrCreateSubfolder(folder, `${nickname} (${uuid.slice(0, 8)})`);
   
-  const d = new Date(completedAt);
-  const dateStr = d.toLocaleDateString('es-CL');
-  const timeStr = d.toLocaleTimeString('es-CL');
-  const yyyymmdd = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  const endD = new Date(completedAt);
+  const startD = testStartTime ? new Date(testStartTime) : endD;
+  
+  const yyyymmdd = endD.getFullYear() + '_' + String(endD.getMonth() + 1).padStart(2, '0') + '_' + String(endD.getDate()).padStart(2, '0');
+  const dateStrForEmail = endD.toLocaleDateString('es-CL');
+  const timeStrForEmail = endD.toLocaleTimeString('es-CL');
 
+  const formatTime = (d) => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
+  const startTimeStr = formatTime(startD);
+  const endTimeStr = formatTime(endD);
+
+  const shortId = hashUuidTo9Digits(uuid);
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
-  const sheetName = `Fatiga_${nickname}_${uuid.slice(0, 8)}`;
+  
+  // Buscar perfil
+  const profileSheet = doc.getSheetByName('PERFILES FATIGA');
+  let sexCode = '', age = '', weight = '', height = '';
+  if (profileSheet) {
+    const pData = profileSheet.getDataRange().getValues();
+    for (let i = 1; i < pData.length; i++) {
+      if (String(pData[i][0]) === String(shortId)) {
+        sexCode = pData[i][1];
+        age = pData[i][2];
+        weight = pData[i][3];
+        height = pData[i][4];
+        break;
+      }
+    }
+  }
+
+  const sheetName = TAB_FATIGA;
   let sheet = doc.getSheetByName(sheetName);
   
   if (!sheet) {
     sheet = doc.insertSheet(sheetName);
-    sheet.getRange(5, 1, 1, 8).setValues([['Fecha', 'Hora', 'Fase', 'Escala Samn-Perelli', 'Audio Frase', 'Audio Abierta', 'Consumió Sustancias', 'Tipo de Sustancia']]);
-    sheet.getRange(5, 1, 1, 8).setFontWeight('bold').setBackground('#000').setFontColor('#fff');
-    sheet.setFrozenRows(5);
+    sheet.appendRow(['id_usuario', 'sexo_mascu', 'edad', 'peso_kg', 'estatura_cm', 'fecha_muestra_yyyy_mm_dd', 'hora_inicio_toma_muestra_l', 'hora_fin_toma_muestra_l', 'jornada_comienzo_fin', 'escala_samn-perelli', 'audio_frase_url', 'segundos_audio_frase', 'audio_abierta_url', 'segundos_audio_abierta', 'consumo_alcohol_remedio_otrasustancia_si1_no0', 'alcohol_si1_no0', 'remedio_si1_no0', 'otra_sustancia_si1_no0']);
+    sheet.getRange(1, 1, 1, 18).setFontWeight('bold').setBackground('#f5e132');
+    sheet.setFrozenRows(1);
   }
   
-  let lastRow = sheet.getLastRow();
-  if (lastRow < 5) lastRow = 5;
-  const sampleNumber = lastRow - 4; // Si lastRow es 5, no hay datos todavia, muestra 1
-  
   const driveLinks = [];
+  const durations = [];
 
   if (audios && audios.length > 0) {
-    audios.forEach((audio) => {
+    audios.forEach((audio, idx) => {
       try {
         let extension = '.wav';
         let safeNickname = nickname.replace(/\s+/g, '_').toLowerCase();
         let safePhase = eventPhase === 'activo' ? 'am' : 'pm';
-        let safeLabel = audio.label.replace(/\s+/g, '_').toLowerCase(); // "Paso 1" -> "paso_1"
+        let safeLabel = audio.label.replace(/\s+/g, '_').toLowerCase(); 
         
-        // Formato: fecha_usuario_numero_fase_paso.wav
-        const fileName = `${yyyymmdd}_${safeNickname}_${sampleNumber}_${safePhase}_${safeLabel}${extension}`;
+        const fileName = `${yyyymmdd}_${safeNickname}_${Date.now()}_${safePhase}_${safeLabel}${extension}`;
         const decoded = Utilities.newBlob(Utilities.base64Decode(audio.base64), audio.mimeType || 'audio/wav', fileName);
         const file = userFolder.createFile(decoded);
         file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        driveLinks.push({ label: audio.label, url: file.getUrl() });
+        driveLinks.push(file.getUrl());
+        durations.push(audio.duration ? Math.round(audio.duration / 1000) : 0);
       } catch (err) {
-        driveLinks.push({ label: audio.label, url: 'Error al subir: ' + err.message });
+        driveLinks.push('');
+        durations.push(0);
       }
     });
   }
 
-  sheet.getRange(lastRow + 1, 1, 1, 8).setValues([[
-    dateStr, 
-    timeStr, 
-    eventPhase === 'activo' ? 'Activo (AM)' : 'Cansado (PM)', 
-    samnPerelli || 'No registrada',
-    driveLinks[0]?.url || 'No subido', 
-    driveLinks[1]?.url || 'No subido',
-    data.hasSubstance || 'No',
-    data.selectedSubstances || 'Ninguna'
-  ]]);
+  const hasSubstanceVal = hasSubstance === 'Si' ? 1 : 0;
+  const subs = (selectedSubstances || '').toLowerCase();
+  const alcVal = subs.includes('alcohol') ? 1 : 0;
+  const remVal = subs.includes('remedio') || subs.includes('fármaco') ? 1 : 0;
+  const otrVal = subs.includes('otra') ? 1 : 0;
+
+  sheet.appendRow([
+    shortId, sexCode, age, weight, height,
+    yyyymmdd, startTimeStr, endTimeStr,
+    eventPhase === 'activo' ? 'comienzo' : 'fin',
+    samnPerelli || '',
+    driveLinks[0] || '', durations[0] || 0,
+    driveLinks[1] || '', durations[1] || 0,
+    hasSubstanceVal, alcVal, remVal, otrVal
+  ]);
 
   const confirmSubject = `${APP_NAME} — ¡Tu test fue recibido!`;
   const confirmHtml = `
@@ -357,7 +394,7 @@ function handleTestCompleted(data) {
       <p style="font-size: 15px; color: #555; margin: 0 0 20px;">Recibimos tus grabaciones de voz correctamente.</p>
       <div style="background: #f5f5f5; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
         <p style="margin: 0 0 8px; font-size: 13px; color: #666;"><strong>Resumen del test:</strong></p>
-        <p style="margin: 0; font-size: 14px; color: #333;">Fecha: ${dateStr} ${timeStr}</p>
+        <p style="margin: 0; font-size: 14px; color: #333;">Fecha: ${dateStrForEmail} ${timeStrForEmail}</p>
         <p style="margin: 4px 0 0; font-size: 14px; color: #333;">Etapa: ${eventPhase === 'activo' ? 'Activo (inicio de jornada)' : 'Cansado (fin de jornada)'}</p>
         <p style="margin: 4px 0 0; font-size: 14px; color: #333;">Nivel de Fatiga: ${samnPerelli || 'No registrada'}</p>
       </div>
@@ -365,6 +402,7 @@ function handleTestCompleted(data) {
     </div>
   `;
   GmailApp.sendEmail(email, confirmSubject, '', { htmlBody: confirmHtml, name: FROM_NAME, bcc: ADMIN_NOTIFICATION_EMAIL });
+  
   return ContentService.createTextOutput(JSON.stringify({ ok: true, message: 'Test saved and confirmation sent', links: driveLinks })).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -374,19 +412,33 @@ function handleTestCompleted(data) {
 function handleSaveMetadata(data) {
   const { uuid, nickname, sex, age, weight, height } = data;
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
-  const sheetName = `Fatiga_${nickname}_${uuid.slice(0, 8)}`;
+  const sheetName = 'PERFILES FATIGA';
   let sheet = doc.getSheetByName(sheetName);
   
   if (!sheet) {
     sheet = doc.insertSheet(sheetName);
-    sheet.getRange(5, 1, 1, 8).setValues([['Fecha', 'Hora', 'Fase', 'Escala Samn-Perelli', 'Audio Frase', 'Audio Abierta', 'Consumió Sustancias', 'Tipo de Sustancia']]);
-    sheet.getRange(5, 1, 1, 8).setFontWeight('bold').setBackground('#000').setFontColor('#fff');
-    sheet.setFrozenRows(5);
+    sheet.appendRow(['ID Usuario', 'Sexo', 'Edad', 'Peso (kg)', 'Estatura (cm)']);
+    sheet.getRange(1, 1, 1, 5).setFontWeight('bold').setBackground('#f5f5f5');
+    sheet.setFrozenRows(1);
   }
   
-  sheet.getRange(1, 1, 1, 4).setValues([['Sexo', 'Edad', 'Peso (kg)', 'Estatura (cm)']]);
-  sheet.getRange(1, 1, 1, 4).setFontWeight('bold').setBackground('#f5f5f5');
-  sheet.getRange(2, 1, 1, 4).setValues([[sex, age, weight, height]]);
+  const shortId = hashUuidTo9Digits(uuid);
+  const sexCode = sex.toLowerCase() === 'hombre' ? 'm' : 'f';
+  
+  const dataRange = sheet.getDataRange().getValues();
+  let foundRow = -1;
+  for (let i = 1; i < dataRange.length; i++) {
+    if (String(dataRange[i][0]) === String(shortId)) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+  
+  if (foundRow > -1) {
+    sheet.getRange(foundRow, 2, 1, 4).setValues([[sexCode, age, weight, height]]);
+  } else {
+    sheet.appendRow([shortId, sexCode, age, weight, height]);
+  }
   
   return ContentService.createTextOutput(JSON.stringify({ ok: true, message: 'Metadata saved' })).setMimeType(ContentService.MimeType.JSON);
 }

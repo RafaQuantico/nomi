@@ -34,7 +34,7 @@ export type RootStackParamList = {
   FatigueMetadata: undefined;
   TestSetup: undefined;
   TestSequence: { eventPhase: 'activo' | 'cansado'; samnPerelli: number };
-  FatigueSubstance: { recordings: any[]; eventPhase: 'activo' | 'cansado'; samnPerelli: number };
+  FatigueSubstance: { recordings: any[]; eventPhase: 'activo' | 'cansado'; samnPerelli: number; testStartTime: number };
   MentalHealthPresentation: undefined;
   MentalHealthTarget: undefined;
   MentalHealthMockupDisclaimer: { target: 'escolar' | 'universitario' };

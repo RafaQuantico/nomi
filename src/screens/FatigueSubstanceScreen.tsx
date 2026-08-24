@@ -17,7 +17,7 @@ import { useAuth } from '../context/AuthContext';
 type Props = NativeStackScreenProps<RootStackParamList, 'FatigueSubstance'>;
 
 export default function FatigueSubstanceScreen({ route, navigation }: Props) {
-  const { recordings, eventPhase, samnPerelli } = route.params;
+  const { recordings, eventPhase, samnPerelli, testStartTime } = route.params;
   const { user } = useAuth();
 
   const [hasSubstance, setHasSubstance] = useState<'Si' | 'No' | null>(null);
@@ -52,6 +52,7 @@ export default function FatigueSubstanceScreen({ route, navigation }: Props) {
         uuid: user?.uuid,
         eventPhase,
         samnPerelli,
+        testStartTime,
         completedAt: new Date().toISOString(),
         audios: recordings,
         hasSubstance,

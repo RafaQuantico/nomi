@@ -24,10 +24,11 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
   const { eventPhase, samnPerelli } = route.params;
   const { user } = useAuth();
   
-  const { isRecording, startRecording, stopRecording } = useWavRecorder();
+  const { isRecording, startRecording, stopRecording, requestPermission } = useWavRecorder();
   
   const [stepIndex, setStepIndex] = useState(0);
-  const [recordings, setRecordings] = useState<{ label: string; base64: string; mimeType: string }[]>([]);
+  const [recordings, setRecordings] = useState<{ label: string; base64: string; mimeType: string; duration?: number }[]>([]);
+  const [testStartTime, setTestStartTime] = useState<number | null>(null);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -44,6 +45,7 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
 
   useEffect(() => {
     setDynamicQuestion(OPEN_QUESTION);
+    setTestStartTime(Date.now());
   }, []);
 
   useEffect(() => {
@@ -90,7 +92,12 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
   
   const isStopDisabled = isRecording && recordingSeconds < currentStep.minSeconds;
 
-  const startCountdown = () => {
+  const startCountdown = async () => {
+    const hasPermission = await requestPermission();
+    if (!hasPermission) {
+      Alert.alert("Error", "No se pudo acceder al micrófono.");
+      return;
+    }
     setCountdown(3);
     setShowCountdown(true);
     let counter = 3;
@@ -120,7 +127,7 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
     try {
       const result = await stopRecording();
       if (result) {
-        const newRecordings = [...recordings, { label: "Paso " + (stepIndex + 1), base64: result.base64, mimeType: "audio/wav" }];
+        const newRecordings = [...recordings, { label: "Paso " + (stepIndex + 1), base64: result.base64, mimeType: "audio/wav", duration: result.duration }];
         setRecordings(newRecordings);
         
         setIsProcessing(false);
@@ -130,7 +137,7 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
           if (stepIndex < steps.length - 1) {
             setStepIndex(stepIndex + 1);
           } else {
-            navigation.replace("FatigueSubstance", { recordings: newRecordings, eventPhase, samnPerelli });
+            navigation.replace("FatigueSubstance", { recordings: newRecordings, eventPhase, samnPerelli, testStartTime: testStartTime || Date.now() });
           }
         }, 1500);
       } else {

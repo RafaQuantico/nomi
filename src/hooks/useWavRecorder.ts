@@ -9,6 +9,17 @@ export function useWavRecorder() {
   const audioDataRef = useRef<Float32Array[]>([]);
   const recordingStartTime = useRef<number>(0);
 
+  const requestPermission = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+      return true;
+    } catch (error) {
+      console.error("Error requesting mic permission:", error);
+      return false;
+    }
+  }, []);
+
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -126,7 +137,7 @@ export function useWavRecorder() {
     return { base64: base64String, duration };
   }, []);
 
-  return { isRecording, startRecording, stopRecording };
+  return { isRecording, startRecording, stopRecording, requestPermission };
 }
 
 function writeString(view: DataView, offset: number, string: string) {
