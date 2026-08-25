@@ -18,7 +18,7 @@ import { useWavRecorder } from "../hooks/useWavRecorder";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TestSequence">;
 
-const OPEN_QUESTION = "Describa con el mayor detalle posible el lugar en el que se encuentra en este momento.";
+const OPEN_QUESTION = "Dígame las dos últimas cosas que hizo antes de esta interacción, y aproximadamente cuánto tiempo le tomaron. Luego, describa las dos siguientes cosas que planea hacer a continuación.";
 
 export default function TestSequenceScreen({ route, navigation }: Props) {
   const { eventPhase, samnPerelli } = route.params;
