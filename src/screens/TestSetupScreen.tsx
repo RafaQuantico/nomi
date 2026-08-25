@@ -49,13 +49,13 @@ export default function TestSetupScreen({ navigation }: Props) {
   }
 
   const scaleOptions = [
-    { value: 1, label: "Completamente alerta, muy despierto" },
-    { value: 2, label: "Muy animado, receptivo, pero no al máximo" },
-    { value: 3, label: "Bien, algo fresco" },
+    { value: 7, label: "Completamente alerta, muy despierto y enérgico" },
+    { value: 6, label: "Muy animado, receptivo, pero no al máximo" },
+    { value: 5, label: "Bien, algo fresco" },
     { value: 4, label: "Un poco cansado, menos que fresco" },
-    { value: 5, label: "Moderadamente cansado, decaído" },
-    { value: 6, label: "Extremadamente cansado, muy difícil concentrarse" },
-    { value: 7, label: "Completamente exhausto, incapaz de funcionar" }
+    { value: 3, label: "Moderadamente cansado, decaído" },
+    { value: 2, label: "Extremadamente cansado, muy difícil concentrarse" },
+    { value: 1, label: "Completamente exhausto, sin capacidad de funcionar de manera efectiva" }
   ];
 
   return (
