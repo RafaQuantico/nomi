@@ -2,6 +2,8 @@ import { useState, useRef, useCallback } from "react";
 
 export function useWavRecorder() {
   const [isRecording, setIsRecording] = useState(false);
+  const isRecordingRef = useRef(false);
+  const actualSampleRate = useRef<number>(44100);
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
@@ -29,6 +31,7 @@ export function useWavRecorder() {
       const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
       const audioContext = new AudioContext({ sampleRate: 48000 });
       audioContextRef.current = audioContext;
+      actualSampleRate.current = audioContext.sampleRate;
 
       const source = audioContext.createMediaStreamSource(stream);
       sourceRef.current = source;
@@ -40,7 +43,7 @@ export function useWavRecorder() {
       audioDataRef.current = [];
 
       processor.onaudioprocess = (e) => {
-        if (!isRecording) return;
+        if (!isRecordingRef.current) return;
         const inputData = e.inputBuffer.getChannelData(0);
         // We must clone the data because the browser reuses the buffer
         audioDataRef.current.push(new Float32Array(inputData));
@@ -50,6 +53,7 @@ export function useWavRecorder() {
       processor.connect(audioContext.destination);
 
       setIsRecording(true);
+      isRecordingRef.current = true;
       recordingStartTime.current = Date.now();
     } catch (error) {
       console.error("Error starting recording:", error);
@@ -59,6 +63,7 @@ export function useWavRecorder() {
 
   const stopRecording = useCallback(async (): Promise<{ base64: string; duration: number } | null> => {
     setIsRecording(false);
+    isRecordingRef.current = false;
     
     if (processorRef.current && sourceRef.current) {
       sourceRef.current.disconnect();
@@ -96,7 +101,7 @@ export function useWavRecorder() {
     }
 
     // Create WAV header
-    const sampleRate = 48000;
+    const sampleRate = actualSampleRate.current;
     const numChannels = 1;
     const bitsPerSample = 16;
     const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
