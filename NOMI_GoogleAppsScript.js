@@ -748,15 +748,23 @@ function handleMentalHealthCompleted(data) {
 // RECORDATORIOS AUTOMÁTICOS
 // -------------------------------------------------------
 
-const FRONTEND_APP_URL = "https://nomi-app-web.vercel.app/metadata"; // <-- SI USAS OTRA URL EN PRODUCCIÓN, CÁMBIALA AQUÍ
+const FRONTEND_APP_URL = "https://nomi-dun-phi.vercel.app/"; // <-- URL actualizada
 
 function sendMorningReminders() {
+  const now = new Date();
+  const deadline = new Date('2026-09-03T23:59:59-04:00'); // Hasta el final de este jueves
+  if (now > deadline) return;
+
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
   const usersSheet = doc.getSheetByName(TAB_REGISTRO);
   if (!usersSheet) return;
   
   const data = usersSheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
+    const rowDate = new Date(data[i][0]);
+    const cutoffDate = new Date('2026-09-02T00:00:00-04:00'); // Inscritos hasta hoy (fin del 1 de sept)
+    if (rowDate > cutoffDate) continue;
+
     const nickname = data[i][2];
     const email = data[i][3];
     if (!email) continue;
@@ -772,18 +780,26 @@ function sendMorningReminders() {
       </div>
     `;
     try {
-      // GmailApp.sendEmail(email, subject, '', { from: 'contacto@nomi.cl', htmlBody, name: FROM_NAME });
+      GmailApp.sendEmail(email, subject, '', { from: 'contacto@nomi.cl', htmlBody, name: FROM_NAME });
     } catch (e) {}
   }
 }
 
 function sendEveningReminders() {
+  const now = new Date();
+  const deadline = new Date('2026-09-03T23:59:59-04:00'); // Hasta el final de este jueves
+  if (now > deadline) return;
+
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
   const usersSheet = doc.getSheetByName(TAB_REGISTRO);
   if (!usersSheet) return;
   
   const data = usersSheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
+    const rowDate = new Date(data[i][0]);
+    const cutoffDate = new Date('2026-09-02T00:00:00-04:00'); // Inscritos hasta hoy (fin del 1 de sept)
+    if (rowDate > cutoffDate) continue;
+
     const nickname = data[i][2];
     const email = data[i][3];
     if (!email) continue;
@@ -799,32 +815,40 @@ function sendEveningReminders() {
       </div>
     `;
     try {
-      // GmailApp.sendEmail(email, subject, '', { from: 'contacto@nomi.cl', htmlBody, name: FROM_NAME });
+      GmailApp.sendEmail(email, subject, '', { from: 'contacto@nomi.cl', htmlBody, name: FROM_NAME });
     } catch (e) {}
   }
 }
 
 function setupDailyTriggers() {
-  // Eliminar triggers anteriores de estas funciones para no duplicar
+  // Eliminar triggers anteriores
   const triggers = ScriptApp.getProjectTriggers();
   for (let i = 0; i < triggers.length; i++) {
     const handler = triggers[i].getHandlerFunction();
-    if (handler === 'sendMorningReminders' || handler === 'sendEveningReminders') {
+    if (handler === 'sendMorningReminders' || handler === 'sendEveningReminders' || handler === 'setupDailyTriggers') {
       ScriptApp.deleteTrigger(triggers[i]);
     }
   }
 
-  // Crear trigger para las 10 AM (aprox)
-  ScriptApp.newTrigger('sendMorningReminders')
+  // Google Apps Script requiere crear triggers específicos en el día para minutos exactos.
+  // Configuramos un trigger a las 00:00 que programará los envíos de hoy.
+  ScriptApp.newTrigger('setupDailyTriggers')
       .timeBased()
-      .atHour(10)
+      .atHour(0)
       .everyDays(1)
       .create();
 
-  // Crear trigger para las 19 PM (aprox)
-  ScriptApp.newTrigger('sendEveningReminders')
-      .timeBased()
-      .atHour(19)
-      .everyDays(1)
-      .create();
+  const now = new Date();
+  
+  // Programar 08:30
+  const morning = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 30, 0);
+  if (morning > now) {
+    ScriptApp.newTrigger('sendMorningReminders').timeBased().at(morning).create();
+  }
+
+  // Programar 19:30
+  const evening = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 19, 30, 0);
+  if (evening > now) {
+    ScriptApp.newTrigger('sendEveningReminders').timeBased().at(evening).create();
+  }
 }
