@@ -420,7 +420,7 @@ function handleTestCompleted(data) {
     </div>
   `;
   try {
-    GmailApp.sendEmail(email, confirmSubject, '', { htmlBody: confirmHtml, name: FROM_NAME, bcc: ADMIN_NOTIFICATION_EMAIL });
+    GmailApp.sendEmail(email, confirmSubject, '', { from: 'contacto@nomi.cl', htmlBody: confirmHtml, name: FROM_NAME, bcc: ADMIN_NOTIFICATION_EMAIL });
   } catch(e) { }
 
   return ContentService.createTextOutput(JSON.stringify({ ok: true, message: 'Test saved and confirmation sent', links: driveLinks })).setMimeType(ContentService.MimeType.JSON);
