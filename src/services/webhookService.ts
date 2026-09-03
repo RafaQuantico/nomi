@@ -238,12 +238,12 @@ export async function fetchDashboardData(): Promise<DashboardData[]> {
   }
 }
 
-export async function registerUserWebhook(email: string, nickname: string, passkey: string): Promise<{uuid: string, email: string, nickname: string}> {
+export async function registerUserWebhook(email: string, nickname: string, passkey: string, phone: string): Promise<{uuid: string, email: string, nickname: string, phone?: string}> {
   const response = await fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     mode: 'cors',
     headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'register_user', email, nickname, passkey }),
+    body: JSON.stringify({ action: 'register_user', email, nickname, passkey, phone }),
   });
   
   const json = await response.json();
@@ -254,7 +254,7 @@ export async function registerUserWebhook(email: string, nickname: string, passk
   }
 }
 
-export async function loginUserWebhook(identifier: string, passkey: string): Promise<{uuid: string, email: string, nickname: string}> {
+export async function loginUserWebhook(identifier: string, passkey: string): Promise<{uuid: string, email: string, nickname: string, phone?: string, hasFatigueMetadata?: boolean}> {
   const response = await fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     mode: 'cors',
@@ -264,7 +264,11 @@ export async function loginUserWebhook(identifier: string, passkey: string): Pro
   
   const json = await response.json();
   if (json.success) {
-    return json.user;
+    const user = json.user;
+    if (json.hasFatigueMetadata !== undefined) {
+      user.hasFatigueMetadata = json.hasFatigueMetadata;
+    }
+    return user;
   } else {
     throw new Error(json.error || 'Credenciales incorrectas o usuario no encontrado.');
   }

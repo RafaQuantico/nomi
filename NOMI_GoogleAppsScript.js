@@ -48,45 +48,45 @@ function doOptions(e) {
 function doGet(e) {
   try {
     const action = e.parameter.action;
-    
+
     if (action !== 'get_dashboard_data') {
-       return ContentService.createTextOutput("Servicio NOMI Centralizado Activo").setMimeType(ContentService.MimeType.TEXT);
+      return ContentService.createTextOutput("Servicio NOMI Centralizado Activo").setMimeType(ContentService.MimeType.TEXT);
     }
-    
+
     // Abrir la planilla maestra
     const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
-    
+
     // Leer datos Escolar
     const sheetEscolar = doc.getSheetByName(TAB_SM_ESCOLARES);
     const dataEscolar = sheetEscolar ? sheetEscolar.getDataRange().getValues() : [];
-    
+
     // Leer datos Universitario
     const sheetUni = doc.getSheetByName(TAB_SM_UNIVERSITARIOS);
     const dataUni = sheetUni ? sheetUni.getDataRange().getValues() : [];
-    
+
     // Función para mapear
     function mapSheetData(data, defaultTarget) {
       if (!data || data.length === 0) return [];
-      
+
       const headers = data[0];
       const isFirstRowData = headers[0] && headers[0].toString().includes('@');
-      
+
       let targetCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('público'));
       let responseCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('escrita'));
       let routeCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('ruta'));
-      
+
       let sexoCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('sexo'));
       let edadCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('edad'));
       let cursoCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('curso'));
       let comunaCol = headers.findIndex(h => h && h.toString().toLowerCase().includes('comuna'));
-      
+
       let p1Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p1:'));
       let p2Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p2:'));
       let p3Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p3:'));
       let p4Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p4:'));
       let p5Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p5:'));
       let p6Col = headers.findIndex(h => h && h.toString().toLowerCase().includes('p6:'));
-      
+
       // Fallback a índices fijos si no encuentra cabeceras claras o la primera fila es dato
       if (isFirstRowData || targetCol === -1 || sexoCol === -1) {
         targetCol = 2;
@@ -102,11 +102,11 @@ function doGet(e) {
         p6Col = 12;
         responseCol = 13;
         // routeCol = la penúltima o última, pero podemos inferirla si no está. En el array original route era col 14
-        routeCol = 18; 
+        routeCol = 18;
       }
-      
+
       const rows = isFirstRowData ? data : data.slice(1);
-      
+
       return rows.map(row => {
         return {
           target: targetCol >= 0 && targetCol < row.length ? (row[targetCol] || defaultTarget) : defaultTarget,
@@ -125,20 +125,20 @@ function doGet(e) {
         };
       });
     }
-    
+
     const escolarMapped = mapSheetData(dataEscolar, 'escolar');
     const uniMapped = mapSheetData(dataUni, 'universitario');
     const allData = escolarMapped.concat(uniMapped);
-    
-    return ContentService.createTextOutput(JSON.stringify({ 
-      status: "success", 
-      data: allData 
+
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "success",
+      data: allData
     })).setMimeType(ContentService.MimeType.JSON);
-    
+
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ 
-      status: "error", 
-      error: err.message 
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "error",
+      error: err.message
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -185,34 +185,35 @@ function doPost(e) {
 function handleRegisterUser(data) {
   var doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
   var usersSheet = doc.getSheetByName(TAB_REGISTRO);
-  
+
   if (!usersSheet) {
     usersSheet = doc.insertSheet(TAB_REGISTRO);
-    usersSheet.appendRow(["Timestamp", "UUID", "Nickname", "Email", "Passkey"]);
+    usersSheet.appendRow(["Timestamp", "UUID", "Nickname", "Email", "Passkey", "Phone"]);
   }
-  
+
   var email = data.email || "";
   var passkey = data.passkey || "";
   var nickname = data.nickname || "";
+  var phone = data.phone || "";
   var uuid = data.uuid || Utilities.getUuid();
-  
+
   // Revisar si el email ya existe
   var dataRange = usersSheet.getDataRange().getValues();
   for (var i = 1; i < dataRange.length; i++) {
     if (dataRange[i][3] === email) {
-      return ContentService.createTextOutput(JSON.stringify({ 
-        success: false, 
-        error: "El correo ya está registrado." 
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: "El correo ya está registrado."
       })).setMimeType(ContentService.MimeType.JSON);
     }
   }
-  
+
   // Guardar nuevo usuario
-  usersSheet.appendRow([new Date(), uuid, nickname, email, passkey]);
-  
-  return ContentService.createTextOutput(JSON.stringify({ 
-    success: true, 
-    user: { uuid: uuid, nickname: nickname, email: email } 
+  usersSheet.appendRow([new Date(), uuid, nickname, email, passkey, phone]);
+
+  return ContentService.createTextOutput(JSON.stringify({
+    success: true,
+    user: { uuid: uuid, nickname: nickname, email: email, phone: phone }
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -222,35 +223,52 @@ function handleRegisterUser(data) {
 function handleLoginUser(data) {
   var doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
   var usersSheet = doc.getSheetByName(TAB_REGISTRO);
-  
+
   if (!usersSheet) {
-    return ContentService.createTextOutput(JSON.stringify({ 
-      success: false, 
-      error: "No hay usuarios registrados." 
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: "No hay usuarios registrados."
     })).setMimeType(ContentService.MimeType.JSON);
   }
-  
+
   var identifier = data.identifier || ""; // puede ser email, nickname o uuid
   var passkey = data.passkey || "";
-  
+
   var dataRange = usersSheet.getDataRange().getValues();
   for (var i = 1; i < dataRange.length; i++) {
     var rowUuid = dataRange[i][1];
     var rowNickname = dataRange[i][2];
     var rowEmail = dataRange[i][3];
     var rowPasskey = dataRange[i][4];
-    
+    var rowPhone = dataRange[i][5] || "";
+
     if ((identifier === rowEmail || identifier === rowNickname || identifier === rowUuid) && passkey === String(rowPasskey)) {
-      return ContentService.createTextOutput(JSON.stringify({ 
-        success: true, 
-        user: { uuid: rowUuid, nickname: rowNickname, email: rowEmail } 
+      
+      // Verificamos si tiene metadatos guardados
+      var hasFatigueMetadata = false;
+      var perfilesSheet = doc.getSheetByName('PERFILES FATIGA');
+      if (perfilesSheet) {
+        var pData = perfilesSheet.getDataRange().getValues();
+        var sId = String(hashUuidTo9Digits(rowUuid));
+        for (var j = 1; j < pData.length; j++) {
+          if (String(pData[j][0]) === sId) {
+            hasFatigueMetadata = true;
+            break;
+          }
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        user: { uuid: rowUuid, nickname: rowNickname, email: rowEmail, phone: rowPhone },
+        hasFatigueMetadata: hasFatigueMetadata
       })).setMimeType(ContentService.MimeType.JSON);
     }
   }
-  
-  return ContentService.createTextOutput(JSON.stringify({ 
-    success: false, 
-    error: "Credenciales incorrectas o usuario no encontrado." 
+
+  return ContentService.createTextOutput(JSON.stringify({
+    success: false,
+    error: "Credenciales incorrectas o usuario no encontrado."
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -294,7 +312,7 @@ function hashUuidTo9Digits(uuid) {
   if (!uuid) return 123456789;
   for (let i = 0; i < uuid.length; i++) {
     hash = ((hash << 5) - hash) + uuid.charCodeAt(i);
-    hash |= 0; 
+    hash |= 0;
   }
   return Math.abs(hash) % 900000000 + 100000000;
 }
@@ -306,10 +324,10 @@ function handleTestCompleted(data) {
   const { email, nickname, uuid, eventPhase, completedAt, audios, samnPerelli, testStartTime, hasSubstance, selectedSubstances } = data;
   const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
   const userFolder = getOrCreateSubfolder(folder, `${nickname} (${uuid.slice(0, 8)})`);
-  
+
   const endD = new Date(completedAt);
   const startD = testStartTime ? new Date(testStartTime) : endD;
-  
+
   const yyyymmdd = endD.getFullYear() + '_' + String(endD.getMonth() + 1).padStart(2, '0') + '_' + String(endD.getDate()).padStart(2, '0');
   const dateStrForEmail = endD.toLocaleDateString('es-CL');
   const timeStrForEmail = endD.toLocaleTimeString('es-CL');
@@ -320,7 +338,7 @@ function handleTestCompleted(data) {
 
   const shortId = hashUuidTo9Digits(uuid);
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
-  
+
   // Buscar perfil
   const profileSheet = doc.getSheetByName('PERFILES FATIGA');
   let sexCode = '', age = '', weight = '', height = '';
@@ -339,14 +357,14 @@ function handleTestCompleted(data) {
 
   const sheetName = TAB_FATIGA;
   let sheet = doc.getSheetByName(sheetName);
-  
+
   if (!sheet) {
     sheet = doc.insertSheet(sheetName);
     sheet.appendRow(['id_usuario', 'sexo_mascu', 'edad', 'peso_kg', 'estatura_cm', 'fecha_muestra_yyyy_mm_dd', 'hora_inicio_toma_muestra_l', 'hora_fin_toma_muestra_l', 'jornada_comienzo_fin', 'escala_samn-perelli', 'audio_frase_url', 'segundos_audio_frase', 'audio_abierta_url', 'segundos_audio_abierta', 'consumo_alcohol_remedio_otrasustancia_si1_no0', 'alcohol_si1_no0', 'remedio_si1_no0', 'otra_sustancia_si1_no0']);
     sheet.getRange(1, 1, 1, 18).setFontWeight('bold').setBackground('#f5e132');
     sheet.setFrozenRows(1);
   }
-  
+
   const driveLinks = [];
   const durations = [];
 
@@ -356,8 +374,8 @@ function handleTestCompleted(data) {
         let extension = '.wav';
         let safeNickname = nickname.replace(/\s+/g, '_').toLowerCase();
         let safePhase = eventPhase === 'activo' ? 'am' : 'pm';
-        let safeLabel = audio.label.replace(/\s+/g, '_').toLowerCase(); 
-        
+        let safeLabel = audio.label.replace(/\s+/g, '_').toLowerCase();
+
         const fileName = `${yyyymmdd}_${safeNickname}_${Date.now()}_${safePhase}_${safeLabel}${extension}`;
         const decoded = Utilities.newBlob(Utilities.base64Decode(audio.base64), audio.mimeType || 'audio/wav', fileName);
         const file = userFolder.createFile(decoded);
@@ -401,8 +419,10 @@ function handleTestCompleted(data) {
       <p style="font-size: 12px; color: #aaa; text-align: center; margin: 0;">Gracias por participar en el programa NOMI.</p>
     </div>
   `;
-  // GmailApp.sendEmail(email, confirmSubject, '', { from: 'contacto@nomi.cl', htmlBody: confirmHtml, name: FROM_NAME, bcc: ADMIN_NOTIFICATION_EMAIL });
-  
+  try {
+    GmailApp.sendEmail(email, confirmSubject, '', { htmlBody: confirmHtml, name: FROM_NAME, bcc: ADMIN_NOTIFICATION_EMAIL });
+  } catch(e) { }
+
   return ContentService.createTextOutput(JSON.stringify({ ok: true, message: 'Test saved and confirmation sent', links: driveLinks })).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -414,17 +434,17 @@ function handleSaveMetadata(data) {
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
   const sheetName = 'PERFILES FATIGA';
   let sheet = doc.getSheetByName(sheetName);
-  
+
   if (!sheet) {
     sheet = doc.insertSheet(sheetName);
     sheet.appendRow(['ID Usuario', 'Sexo', 'Edad', 'Peso (kg)', 'Estatura (cm)']);
     sheet.getRange(1, 1, 1, 5).setFontWeight('bold').setBackground('#f5f5f5');
     sheet.setFrozenRows(1);
   }
-  
+
   const shortId = hashUuidTo9Digits(uuid);
   const sexCode = sex.toLowerCase() === 'hombre' ? 'm' : 'f';
-  
+
   const dataRange = sheet.getDataRange().getValues();
   let foundRow = -1;
   for (let i = 1; i < dataRange.length; i++) {
@@ -433,50 +453,20 @@ function handleSaveMetadata(data) {
       break;
     }
   }
-  
+
   if (foundRow > -1) {
     sheet.getRange(foundRow, 2, 1, 4).setValues([[sexCode, age, weight, height]]);
   } else {
     sheet.appendRow([shortId, sexCode, age, weight, height]);
   }
-  
+
   return ContentService.createTextOutput(JSON.stringify({ ok: true, message: 'Metadata saved' })).setMimeType(ContentService.MimeType.JSON);
 }
 
 // -------------------------------------------------------
 // TRIGGERS (CRON JOBS): RECORDATORIOS AM/PM
 // -------------------------------------------------------
-function sendFatigueReminders() {
-  const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
-  const usersSheet = doc.getSheetByName(TAB_REGISTRO);
-  if (!usersSheet) return;
-  
-  const data = usersSheet.getDataRange().getValues();
-  const hour = new Date().getHours();
-  let phase = '';
-  if (hour >= 9 && hour <= 12) phase = 'AM (Inicio de Jornada)';
-  else if (hour >= 18 && hour <= 21) phase = 'PM (Fin de Jornada)';
-  else return; 
-  
-  for (let i = 1; i < data.length; i++) {
-    const email = data[i][3];
-    const nickname = data[i][2];
-    if (!email) continue;
-    
-    const subject = `NOMI — Recordatorio de Test de Fatiga ${phase.substring(0,2)}`;
-    const htmlBody = `
-      <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; background: #fff; padding: 30px;">
-        <h2 style="color:#000;">Hola, ${nickname}</h2>
-        <p style="color:#555; font-size:15px;">Te recordamos que es momento de registrar tu voz para la medición <strong>${phase}</strong>.</p>
-        <p style="color:#555; font-size:15px;">Recuerda ubicarte en un lugar silencioso.</p>
-        <a href="https://nomi-app-web.vercel.app/test" style="display:inline-block; background:#000; color:#fff; text-decoration:none; padding:12px 24px; border-radius:8px; font-weight:bold; margin-top:20px;">Iniciar Test Ahora</a>
-      </div>
-    `;
-    try {
-      // GmailApp.sendEmail(email, subject, '', { from: 'contacto@nomi.cl', htmlBody: htmlBody, name: FROM_NAME });
-    } catch(e) {}
-  }
-}
+// (Esta función antigua se ha reemplazado por sendMorningReminders y sendEveningReminders al final del archivo)
 
 
 function getOrCreateSubfolder(parentFolder, name) {
@@ -496,14 +486,14 @@ function handleMentalHealthCompleted(data) {
 
     var doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
     var sheet = doc.getSheetByName(targetTab);
-    
+
     // Fallback: si la pestaña no existe, se crea
     if (!sheet) {
-        sheet = doc.insertSheet(targetTab);
+      sheet = doc.insertSheet(targetTab);
     }
-    
+
     var folder = DriveApp.getFolderById(targetFolderId);
-    
+
     var audioUrl = "Sin audio";
     if (data.audio && data.audio.base64) {
       var byteCharacters = Utilities.base64Decode(data.audio.base64);
@@ -513,7 +503,7 @@ function handleMentalHealthCompleted(data) {
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       audioUrl = file.getUrl();
     }
-    
+
     var initialAudioUrl = "Sin audio";
     if (data.initialAudio && data.initialAudio.base64) {
       var byteCharactersInit = Utilities.base64Decode(data.initialAudio.base64);
@@ -523,7 +513,7 @@ function handleMentalHealthCompleted(data) {
       fileInit.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       initialAudioUrl = fileInit.getUrl();
     }
-    
+
     // --- LÓGICA DE CLASIFICACIÓN ---
     function getScore(answer) {
       if (!answer) return 0;
@@ -543,7 +533,7 @@ function handleMentalHealthCompleted(data) {
     var animoScore = getScore(data.answers[0]) + getScore(data.answers[1]);
     var ansiedadScore = getScore(data.answers[2]) + getScore(data.answers[3]);
     var sobrecargaScore = getScore(data.answers[4]) + getScore(data.answers[5]);
-    
+
     var totalScore = animoScore + ansiedadScore + sobrecargaScore;
     var maxDim = Math.max(animoScore, Math.max(ansiedadScore, sobrecargaScore));
 
@@ -599,24 +589,24 @@ function handleMentalHealthCompleted(data) {
       data.textResponse || "", initialAudioUrl, audioUrl, data.completedAt,
       totalScore, rutaSugerida
     ];
-    
+
     if (sheet.getLastRow() === 0) {
       sheet.appendRow([
         "Email", "Nickname", "Tipo Público",
-        "P1: Ganas/Interés", "P2: Tristeza", "P3: Nervios", "P4: Preocupación", "P5: Exigencias", "P6: Relajación", 
+        "P1: Ganas/Interés", "P2: Tristeza", "P3: Nervios", "P4: Preocupación", "P5: Exigencias", "P6: Relajación",
         "Respuesta Escrita", "Enlace Audio Datos", "Enlace Audio Final", "Fecha", "Puntaje Total", "Ruta Asignada"
       ]);
       sheet.getRange(1, 1, 1, 15).setFontWeight('bold').setBackground('#000').setFontColor('#fff');
       sheet.setFrozenRows(1);
     }
     sheet.appendRow(row);
-    
+
     // Preparar el HTML
     var subject = "Resultado Test de Salud Mental - NOMI";
     var dateStr = data.completedAt ? new Date(data.completedAt).toLocaleString('es-CL') : new Date().toLocaleString('es-CL');
     var baseUrl = data.appUrl || "nomi-app://";
     var dashboardUrl = baseUrl + (baseUrl.endsWith('/') ? '' : '/') + "dashboard/welcome?auth=admin_token";
-    
+
     var emailHtml = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -722,23 +712,23 @@ function handleMentalHealthCompleted(data) {
   </div>
 </body>
 </html>`;
-      
+
     // GmailApp.sendEmail(data.email, subject, '', {
     //   from: 'contacto@nomi.cl',
     //   htmlBody: emailHtml,
     //   name: FROM_NAME,
     //   bcc: ADMIN_NOTIFICATION_EMAIL
     // });
-    
-    return ContentService.createTextOutput(JSON.stringify({ 
-      status: "success", 
-      message: "Datos de salud mental guardados y correo de administrador enviado" 
+
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "success",
+      message: "Datos de salud mental guardados y correo de administrador enviado"
     })).setMimeType(ContentService.MimeType.JSON);
-      
-  } catch(err) {
-    return ContentService.createTextOutput(JSON.stringify({ 
-      status: "error", 
-      error: err.message 
+
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "error",
+      error: err.message
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -750,6 +740,23 @@ function handleMentalHealthCompleted(data) {
 
 const FRONTEND_APP_URL = "https://nomi-dun-phi.vercel.app/"; // <-- URL actualizada
 
+function getCompletedIdsForToday(doc, phase) {
+  const fatigaSheet = doc.getSheetByName(TAB_FATIGA);
+  if (!fatigaSheet) return new Set();
+
+  const fatigaData = fatigaSheet.getDataRange().getValues();
+  const now = new Date();
+  const yyyymmdd = now.getFullYear() + '_' + String(now.getMonth() + 1).padStart(2, '0') + '_' + String(now.getDate()).padStart(2, '0');
+  const completedIds = new Set();
+
+  for (let i = 1; i < fatigaData.length; i++) {
+    if (fatigaData[i][5] === yyyymmdd && fatigaData[i][8] === phase) {
+      completedIds.add(String(fatigaData[i][0]));
+    }
+  }
+  return completedIds;
+}
+
 function sendMorningReminders() {
   const now = new Date();
   const deadline = new Date('2026-09-03T23:59:59-04:00'); // Hasta el final de este jueves
@@ -758,17 +765,23 @@ function sendMorningReminders() {
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
   const usersSheet = doc.getSheetByName(TAB_REGISTRO);
   if (!usersSheet) return;
-  
+
+  const completedIds = getCompletedIdsForToday(doc, 'comienzo');
   const data = usersSheet.getDataRange().getValues();
+  
   for (let i = 1; i < data.length; i++) {
     const rowDate = new Date(data[i][0]);
     const cutoffDate = new Date('2026-09-02T00:00:00-04:00'); // Inscritos hasta hoy (fin del 1 de sept)
     if (rowDate > cutoffDate) continue;
 
+    const uuid = data[i][1];
+    const shortId = String(hashUuidTo9Digits(uuid));
+    if (completedIds.has(shortId)) continue; // Ya hizo el test de la mañana
+
     const nickname = data[i][2];
     const email = data[i][3];
     if (!email) continue;
-    
+
     const subject = `${APP_NAME} — ¡Hora de tu test (Inicio de Jornada)!`;
     const htmlBody = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; background: #fff; padding: 40px 32px;">
@@ -780,8 +793,8 @@ function sendMorningReminders() {
       </div>
     `;
     try {
-      GmailApp.sendEmail(email, subject, '', { from: 'contacto@nomi.cl', htmlBody, name: FROM_NAME });
-    } catch (e) {}
+      GmailApp.sendEmail(email, subject, '', { htmlBody, name: FROM_NAME });
+    } catch (e) { }
   }
 }
 
@@ -793,17 +806,23 @@ function sendEveningReminders() {
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
   const usersSheet = doc.getSheetByName(TAB_REGISTRO);
   if (!usersSheet) return;
-  
+
+  const completedIds = getCompletedIdsForToday(doc, 'fin');
   const data = usersSheet.getDataRange().getValues();
+  
   for (let i = 1; i < data.length; i++) {
     const rowDate = new Date(data[i][0]);
     const cutoffDate = new Date('2026-09-02T00:00:00-04:00'); // Inscritos hasta hoy (fin del 1 de sept)
     if (rowDate > cutoffDate) continue;
 
+    const uuid = data[i][1];
+    const shortId = String(hashUuidTo9Digits(uuid));
+    if (completedIds.has(shortId)) continue; // Ya hizo el test de la tarde
+
     const nickname = data[i][2];
     const email = data[i][3];
     if (!email) continue;
-    
+
     const subject = `${APP_NAME} — ¡Hora de tu test (Fin de Jornada)!`;
     const htmlBody = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; background: #fff; padding: 40px 32px;">
@@ -815,31 +834,31 @@ function sendEveningReminders() {
       </div>
     `;
     try {
-      GmailApp.sendEmail(email, subject, '', { from: 'contacto@nomi.cl', htmlBody, name: FROM_NAME });
-    } catch (e) {}
+      GmailApp.sendEmail(email, subject, '', { htmlBody, name: FROM_NAME });
+    } catch (e) { }
   }
 }
 
-function setupDailyTriggers() {
+function setupExactTriggers() {
   // Eliminar triggers anteriores
   const triggers = ScriptApp.getProjectTriggers();
   for (let i = 0; i < triggers.length; i++) {
     const handler = triggers[i].getHandlerFunction();
-    if (handler === 'sendMorningReminders' || handler === 'sendEveningReminders' || handler === 'setupDailyTriggers') {
+    if (handler === 'sendMorningReminders' || handler === 'sendEveningReminders' || handler === 'setupExactTriggers' || handler === 'setupDailyTriggers') {
       ScriptApp.deleteTrigger(triggers[i]);
     }
   }
 
   // Google Apps Script requiere crear triggers específicos en el día para minutos exactos.
   // Configuramos un trigger a las 00:00 que programará los envíos de hoy.
-  ScriptApp.newTrigger('setupDailyTriggers')
-      .timeBased()
-      .atHour(0)
-      .everyDays(1)
-      .create();
+  ScriptApp.newTrigger('setupExactTriggers')
+    .timeBased()
+    .atHour(0)
+    .everyDays(1)
+    .create();
 
   const now = new Date();
-  
+
   // Programar 08:30
   const morning = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 30, 0);
   if (morning > now) {

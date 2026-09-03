@@ -23,9 +23,10 @@ type Props = {
 
 export default function AuthScreen({ navigation }: Props) {
   const { login, createUser } = useAuth();
-  const [mode, setMode] = useState<'login' | 'create'>('create');
+  const [mode, setMode] = useState<'login' | 'create'>('login');
   const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [passkey, setPasskey] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,7 +35,7 @@ export default function AuthScreen({ navigation }: Props) {
   async function handleSubmit() {
     setErrorMsg('');
     if (mode === 'create') {
-      if (!nickname.trim() || !email.trim() || passkey.length !== 8) {
+      if (!nickname.trim() || !email.trim() || !phone.trim() || passkey.length !== 8) {
         setErrorMsg('Completa todos los campos. La clave debe tener 8 dígitos.');
         return;
       }
@@ -47,7 +48,7 @@ export default function AuthScreen({ navigation }: Props) {
     setLoading(true);
     try {
       if (mode === 'create') {
-        await createUser(nickname.trim(), email.trim(), passkey.trim());
+        await createUser(nickname.trim(), email.trim(), passkey.trim(), phone.trim());
         // Enviar el correo de bienvenida en segundo plano sin bloquear
         sendWelcomeEmail({
           email: email.trim(),
@@ -116,6 +117,18 @@ export default function AuthScreen({ navigation }: Props) {
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Teléfono</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="+56912345678"
+                  placeholderTextColor="#999"
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
                   autoCapitalize="none"
                 />
               </View>

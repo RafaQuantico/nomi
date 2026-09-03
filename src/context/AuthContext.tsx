@@ -7,6 +7,7 @@ export interface User {
   uuid: string;
   nickname: string;
   email: string;
+  phone?: string;
 }
 
 interface AuthContextType {
@@ -14,7 +15,7 @@ interface AuthContextType {
   passkey: string;
   isLoading: boolean;
   login: (identifier: string, passkey: string) => Promise<void>;
-  createUser: (nickname: string, email: string, passkey: string) => Promise<void>;
+  createUser: (nickname: string, email: string, passkey: string, phone: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -38,7 +39,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (uuid && savedPasskey) {
           const email = await AsyncStorage.getItem('email') || '';
           const nickname = await AsyncStorage.getItem('nickname') || '';
-          setUser({ uuid, email, nickname });
+          const phone = await AsyncStorage.getItem('phone') || '';
+          setUser({ uuid, email, nickname, phone });
           setPasskey(savedPasskey);
         } else {
           throw new Error('Sesión inválida');
@@ -58,26 +60,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ['passkey', pk],
       ['nickname', loggedUser.nickname],
       ['email', loggedUser.email],
+      ['phone', loggedUser.phone || ''],
     ]);
-    setUser(loggedUser);
+    
+    if (loggedUser.hasFatigueMetadata) {
+      await AsyncStorage.setItem(`@nomi_fatigue_metadata_${loggedUser.uuid}`, "true");
+    }
+
+    setUser({
+      uuid: loggedUser.uuid,
+      nickname: loggedUser.nickname,
+      email: loggedUser.email,
+      phone: loggedUser.phone || '',
+    });
     setPasskey(pk);
   }
 
-  async function createUser(nickname: string, email: string, pk: string) {
-    const newUser = await registerUserWebhook(email, nickname, pk);
+  async function createUser(nickname: string, email: string, pk: string, phone: string) {
+    const newUser = await registerUserWebhook(email, nickname, pk, phone);
 
     await AsyncStorage.multiSet([
       ['uuid', newUser.uuid],
       ['passkey', pk],
       ['nickname', newUser.nickname],
       ['email', newUser.email],
+      ['phone', phone],
     ]);
-    setUser(newUser);
+    setUser({ ...newUser, phone });
     setPasskey(pk);
   }
 
   async function logout() {
-    await AsyncStorage.multiRemove(['uuid', 'passkey', 'nickname', 'email']);
+    await AsyncStorage.multiRemove(['uuid', 'passkey', 'nickname', 'email', 'phone']);
     setUser(null);
     setPasskey('');
     try {
