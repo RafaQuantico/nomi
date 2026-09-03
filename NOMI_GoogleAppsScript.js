@@ -759,7 +759,7 @@ function getCompletedIdsForToday(doc, phase) {
 
 function sendMorningReminders() {
   const now = new Date();
-  const deadline = new Date('2026-09-03T23:59:59-04:00'); // Hasta el final de este jueves
+  const deadline = new Date('2026-09-10T23:59:59-04:00'); // Hasta el final del próximo jueves
   if (now > deadline) return;
 
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
@@ -800,7 +800,7 @@ function sendMorningReminders() {
 
 function sendEveningReminders() {
   const now = new Date();
-  const deadline = new Date('2026-09-03T23:59:59-04:00'); // Hasta el final de este jueves
+  const deadline = new Date('2026-09-10T23:59:59-04:00'); // Hasta el final del próximo jueves
   if (now > deadline) return;
 
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
