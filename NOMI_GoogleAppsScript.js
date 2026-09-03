@@ -740,6 +740,63 @@ function handleMentalHealthCompleted(data) {
 
 const FRONTEND_APP_URL = "https://nomi-dun-phi.vercel.app/"; // <-- URL actualizada
 
+// -------------------------------------------------------
+// WHATSAPP API CONFIGURATION
+// -------------------------------------------------------
+const WHATSAPP_TOKEN = "AQUÍ_VA_EL_TOKEN_DE_META";
+const WHATSAPP_PHONE_ID = "AQUÍ_VA_EL_ID_DEL_TELÉFONO";
+const WHATSAPP_TEMPLATE_MORNING = "recordatorio_manana"; // Nombre de la plantilla en Meta
+const WHATSAPP_TEMPLATE_EVENING = "recordatorio_tarde";  // Nombre de la plantilla en Meta
+
+function sendWhatsAppReminder(phone, nickname, templateName) {
+  if (WHATSAPP_TOKEN === "AQUÍ_VA_EL_TOKEN_DE_META" || !phone) return;
+  
+  const cleanPhone = phone.toString().replace(/\D/g, '');
+  if (cleanPhone.length < 11) return; // Debe tener +569... -> 11 dígitos
+  
+  const url = `https://graph.facebook.com/v17.0/${WHATSAPP_PHONE_ID}/messages`;
+  
+  const payload = {
+    messaging_product: "whatsapp",
+    to: cleanPhone,
+    type: "template",
+    template: {
+      name: templateName,
+      language: { code: "es" }, // Asegúrate de que el idioma de tu plantilla sea español
+      components: [
+        {
+          type: "body",
+          parameters: [
+            { type: "text", text: nickname } // Suponiendo que la plantilla tiene una variable {{1}} para el nombre
+          ]
+        }
+      ]
+    }
+  };
+
+  const options = {
+    method: "post",
+    contentType: "application/json",
+    headers: {
+      "Authorization": `Bearer ${WHATSAPP_TOKEN}`
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  try {
+    UrlFetchApp.fetch(url, options);
+  } catch (e) {
+    Logger.log("Error enviando WhatsApp a " + cleanPhone + ": " + e.message);
+  }
+}
+
+function testWhatsAppConnection() {
+  // Configura aquí tu número real para probar (ej: "+56912345678") y el nombre de una plantilla tuya.
+  sendWhatsAppReminder("+569XXXXXXXX", "Tu Nombre", "hello_world");
+}
+
+
 function getCompletedIdsForToday(doc, phase) {
   const fatigaSheet = doc.getSheetByName(TAB_FATIGA);
   if (!fatigaSheet) return new Set();
@@ -780,6 +837,12 @@ function sendMorningReminders() {
 
     const nickname = data[i][2];
     const email = data[i][3];
+    const phone = data[i][5];
+
+    if (phone) {
+      sendWhatsAppReminder(phone, nickname, WHATSAPP_TEMPLATE_MORNING);
+    }
+    
     if (!email) continue;
 
     const subject = `${APP_NAME} — ¡Hora de tu test (Inicio de Jornada)!`;
@@ -821,6 +884,12 @@ function sendEveningReminders() {
 
     const nickname = data[i][2];
     const email = data[i][3];
+    const phone = data[i][5];
+
+    if (phone) {
+      sendWhatsAppReminder(phone, nickname, WHATSAPP_TEMPLATE_EVENING);
+    }
+    
     if (!email) continue;
 
     const subject = `${APP_NAME} — ¡Hora de tu test (Fin de Jornada)!`;

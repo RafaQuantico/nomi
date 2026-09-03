@@ -39,6 +39,10 @@ export default function AuthScreen({ navigation }: Props) {
         setErrorMsg('Completa todos los campos. La clave debe tener 8 dígitos.');
         return;
       }
+      if (!/^\+569\d{8}$/.test(phone.trim())) {
+        setErrorMsg('El teléfono debe tener el formato +569 seguido de 8 dígitos.');
+        return;
+      }
     } else {
       if (!identifier.trim() || passkey.length !== 8) {
         setErrorMsg('Ingresa tu identificador y los 8 dígitos de tu clave.');
@@ -131,6 +135,7 @@ export default function AuthScreen({ navigation }: Props) {
                   keyboardType="phone-pad"
                   autoCapitalize="none"
                 />
+                <Text style={styles.helperText}>Formato obligatorio: +569 seguido de 8 dígitos</Text>
               </View>
             </>
           ) : (
@@ -192,6 +197,7 @@ const styles = StyleSheet.create({
   form: { gap: 16 },
   fieldGroup: { gap: 6 },
   label: { fontSize: 13, fontWeight: '700', color: '#333' },
+  helperText: { fontSize: 11, color: '#888', marginTop: -2 },
   input: {
     borderWidth: 1.5,
     borderColor: '#ddd',
