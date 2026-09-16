@@ -75,7 +75,7 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
     {
       label: "Audio 1 / 2",
       instruction: "Por favor lee en voz alta la siguiente frase",
-      highlight: "“El rápido zorro marrón salta sobre el perro perezoso.”",
+      highlight: "“El cangrejo viejo quedó perplejo al ver el reflejo de aquel espejo.”",
       recordingLabel: "Lee la frase...",
       minSeconds: 0
     },

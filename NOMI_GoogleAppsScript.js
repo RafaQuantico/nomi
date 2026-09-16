@@ -243,7 +243,7 @@ function handleLoginUser(data) {
     var rowPhone = dataRange[i][5] || "";
 
     if ((identifier === rowEmail || identifier === rowNickname || identifier === rowUuid) && passkey === String(rowPasskey)) {
-      
+
       // Verificamos si tiene metadatos guardados
       var hasFatigueMetadata = false;
       var perfilesSheet = doc.getSheetByName('PERFILES FATIGA');
@@ -421,7 +421,7 @@ function handleTestCompleted(data) {
   `;
   try {
     GmailApp.sendEmail(email, confirmSubject, '', { from: 'contacto@nomi.cl', htmlBody: confirmHtml, name: FROM_NAME, bcc: ADMIN_NOTIFICATION_EMAIL });
-  } catch(e) { }
+  } catch (e) { }
 
   return ContentService.createTextOutput(JSON.stringify({ ok: true, message: 'Test saved and confirmation sent', links: driveLinks })).setMimeType(ContentService.MimeType.JSON);
 }
@@ -737,32 +737,33 @@ function handleMentalHealthCompleted(data) {
 // -------------------------------------------------------
 // RECORDATORIOS AUTOMÁTICOS
 // -------------------------------------------------------
+const ENABLE_REMINDERS = false; // <-- CAMBIA ESTO A true PARA ENCENDER EL PILOTO MASIVO
 
 const FRONTEND_APP_URL = "https://nomi-dun-phi.vercel.app/"; // <-- URL actualizada
 
 // -------------------------------------------------------
 // WHATSAPP API CONFIGURATION
 // -------------------------------------------------------
-const WHATSAPP_TOKEN = "AQUÍ_VA_EL_TOKEN_DE_META";
-const WHATSAPP_PHONE_ID = "AQUÍ_VA_EL_ID_DEL_TELÉFONO";
+const WHATSAPP_TOKEN = "EAAPFZAjj7UWABSfJmwghT3b53HUCI8MdJZANgf75jmk6hQnDTj1NzsHUIEgL0DfrvZAh8cjRIXEob0JVrp7Yd7REyFqZAZANYCvTsigYt5OOE8QX1kuXOW4nvjcTjhQ8Wq7AJlyHZBDTZCcIeZA0UpBh1obIaE3hvh27d2GZBnZAZAZByzSWwZApYtFqv9WIFe93rGgZDZD";
+const WHATSAPP_PHONE_ID = "1293751907156693"; // Obtenido del registro de Meta
 const WHATSAPP_TEMPLATE_MORNING = "recordatorio_manana"; // Nombre de la plantilla en Meta
 const WHATSAPP_TEMPLATE_EVENING = "recordatorio_tarde";  // Nombre de la plantilla en Meta
 
 function sendWhatsAppReminder(phone, nickname, templateName) {
   if (WHATSAPP_TOKEN === "AQUÍ_VA_EL_TOKEN_DE_META" || !phone) return;
-  
+
   const cleanPhone = phone.toString().replace(/\D/g, '');
-  if (cleanPhone.length < 11) return; // Debe tener +569... -> 11 dígitos
-  
+  if (cleanPhone.length < 8) return; // Permitir números internacionales más cortos
+
   const url = `https://graph.facebook.com/v17.0/${WHATSAPP_PHONE_ID}/messages`;
-  
+
   const payload = {
     messaging_product: "whatsapp",
     to: cleanPhone,
     type: "template",
     template: {
       name: templateName,
-      language: { code: "es" }, // Asegúrate de que el idioma de tu plantilla sea español
+      language: { code: "es_CL" }, // Coincide con Spanish (CHL)
       components: [
         {
           type: "body",
@@ -785,7 +786,8 @@ function sendWhatsAppReminder(phone, nickname, templateName) {
   };
 
   try {
-    UrlFetchApp.fetch(url, options);
+    const response = UrlFetchApp.fetch(url, options);
+    Logger.log("Respuesta Meta: " + response.getContentText());
   } catch (e) {
     Logger.log("Error enviando WhatsApp a " + cleanPhone + ": " + e.message);
   }
@@ -793,7 +795,7 @@ function sendWhatsAppReminder(phone, nickname, templateName) {
 
 function testWhatsAppConnection() {
   // Configura aquí tu número real para probar (ej: "+56912345678") y el nombre de una plantilla tuya.
-  sendWhatsAppReminder("+569XXXXXXXX", "Tu Nombre", "hello_world");
+  sendWhatsAppReminder("+569XXXXXXXX", "Tu Nombre", WHATSAPP_TEMPLATE_MORNING);
 }
 
 
@@ -815,9 +817,12 @@ function getCompletedIdsForToday(doc, phase) {
 }
 
 function sendMorningReminders() {
+  if (!ENABLE_REMINDERS) {
+    Logger.log("Los recordatorios automáticos están apagados (ENABLE_REMINDERS = false).");
+    return;
+  }
+  
   const now = new Date();
-  const deadline = new Date('2026-09-10T23:59:59-04:00'); // Hasta el final del próximo jueves
-  if (now > deadline) return;
 
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
   const usersSheet = doc.getSheetByName(TAB_REGISTRO);
@@ -825,11 +830,10 @@ function sendMorningReminders() {
 
   const completedIds = getCompletedIdsForToday(doc, 'comienzo');
   const data = usersSheet.getDataRange().getValues();
-  
+
   for (let i = 1; i < data.length; i++) {
     const rowDate = new Date(data[i][0]);
-    const cutoffDate = new Date('2026-09-02T00:00:00-04:00'); // Inscritos hasta hoy (fin del 1 de sept)
-    if (rowDate > cutoffDate) continue;
+    // Sin límite de fecha: se enviará a todos los inscritos en la hoja
 
     const uuid = data[i][1];
     const shortId = String(hashUuidTo9Digits(uuid));
@@ -839,11 +843,24 @@ function sendMorningReminders() {
     const email = data[i][3];
     const phone = data[i][5];
 
+    Logger.log("Revisando usuario: " + nickname + " (ID: " + shortId + ")");
+
+    if (completedIds.has(shortId)) {
+      Logger.log("-> OMITIDO: Ya completó el test de comienzo hoy.");
+      continue; // Ya hizo el test de la mañana
+    }
+
     if (phone) {
+      Logger.log("-> Enviando WhatsApp a: " + phone);
       sendWhatsAppReminder(phone, nickname, WHATSAPP_TEMPLATE_MORNING);
     }
+
+    if (!email) {
+      Logger.log("-> Sin correo, saltando.");
+      continue;
+    }
     
-    if (!email) continue;
+    Logger.log("-> Enviando correo a: " + email);
 
     const subject = `${APP_NAME} — ¡Hora de tu test (Inicio de Jornada)!`;
     const htmlBody = `
@@ -862,9 +879,12 @@ function sendMorningReminders() {
 }
 
 function sendEveningReminders() {
+  if (!ENABLE_REMINDERS) {
+    Logger.log("Los recordatorios automáticos están apagados (ENABLE_REMINDERS = false).");
+    return;
+  }
+
   const now = new Date();
-  const deadline = new Date('2026-09-10T23:59:59-04:00'); // Hasta el final del próximo jueves
-  if (now > deadline) return;
 
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
   const usersSheet = doc.getSheetByName(TAB_REGISTRO);
@@ -872,11 +892,10 @@ function sendEveningReminders() {
 
   const completedIds = getCompletedIdsForToday(doc, 'fin');
   const data = usersSheet.getDataRange().getValues();
-  
+
   for (let i = 1; i < data.length; i++) {
     const rowDate = new Date(data[i][0]);
-    const cutoffDate = new Date('2026-09-02T00:00:00-04:00'); // Inscritos hasta hoy (fin del 1 de sept)
-    if (rowDate > cutoffDate) continue;
+    // Sin límite de fecha: se enviará a todos los inscritos en la hoja
 
     const uuid = data[i][1];
     const shortId = String(hashUuidTo9Digits(uuid));
@@ -886,11 +905,24 @@ function sendEveningReminders() {
     const email = data[i][3];
     const phone = data[i][5];
 
+    Logger.log("Revisando usuario: " + nickname + " (ID: " + shortId + ")");
+
+    if (completedIds.has(shortId)) {
+      Logger.log("-> OMITIDO: Ya completó el test de fin hoy.");
+      continue; // Ya hizo el test de la tarde
+    }
+
     if (phone) {
+      Logger.log("-> Enviando WhatsApp a: " + phone);
       sendWhatsAppReminder(phone, nickname, WHATSAPP_TEMPLATE_EVENING);
     }
-    
-    if (!email) continue;
+
+    if (!email) {
+      Logger.log("-> Sin correo, saltando.");
+      continue;
+    }
+
+    Logger.log("-> Enviando correo a: " + email);
 
     const subject = `${APP_NAME} — ¡Hora de tu test (Fin de Jornada)!`;
     const htmlBody = `

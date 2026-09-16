@@ -39,8 +39,8 @@ export default function AuthScreen({ navigation }: Props) {
         setErrorMsg('Completa todos los campos. La clave debe tener 8 dígitos.');
         return;
       }
-      if (!/^\+569\d{8}$/.test(phone.trim())) {
-        setErrorMsg('El teléfono debe tener el formato +569 seguido de 8 dígitos.');
+      if (!/^\+?\d{7,15}$/.test(phone.trim())) {
+        setErrorMsg('El teléfono debe incluir tu código de país (ej: +56912345678 o +5491123456789).');
         return;
       }
     } else {
@@ -135,7 +135,7 @@ export default function AuthScreen({ navigation }: Props) {
                   keyboardType="phone-pad"
                   autoCapitalize="none"
                 />
-                <Text style={styles.helperText}>Formato obligatorio: +569 seguido de 8 dígitos</Text>
+                <Text style={styles.helperText}>Incluye el código de tu país. Ej: +569... o 5255...</Text>
               </View>
             </>
           ) : (
