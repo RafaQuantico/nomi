@@ -298,7 +298,6 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
           </View>
         </View>
       )}
-      </View>
     </SafeAreaView>
   );
 }
