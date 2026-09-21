@@ -6,7 +6,9 @@ import {
   TouchableOpacity,
   Text,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Video, ResizeMode } from 'expo-av';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
@@ -16,6 +18,9 @@ type Props = {
 };
 
 export default function IntroScreen({ navigation }: Props) {
+  const { width, height } = useWindowDimensions();
+  const isDesktop = width > 768;
+
   const nomiOpacity = useRef(new Animated.Value(0)).current;
   const quanticoOpacity = useRef(new Animated.Value(0)).current;
   const buttonOpacity = useRef(new Animated.Value(0)).current;
@@ -49,8 +54,15 @@ export default function IntroScreen({ navigation }: Props) {
         source={require('../../assets/bgn01.mp4')}
         style={[
           StyleSheet.absoluteFill,
-          { width: '100%', height: '100%' },
-          Platform.OS === 'web' && { transform: [{ rotate: '90deg' }, { scale: 3.5 }] }
+          isDesktop 
+            ? {
+                width: height,
+                height: width,
+                left: (width - height) / 2,
+                top: (height - width) / 2,
+                transform: [{ rotate: '90deg' }]
+              }
+            : { width: '100%', height: '100%' }
         ]}
         resizeMode={ResizeMode.COVER}
         isLooping
@@ -64,8 +76,10 @@ export default function IntroScreen({ navigation }: Props) {
           resizeMode="contain"
         />
         <Animated.View style={[styles.buttonContainer, { opacity: buttonOpacity }]}>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Auth')}>
-            <Text style={styles.buttonText}>Comenzar</Text>
+          <TouchableOpacity style={styles.buttonWrapper} onPress={() => navigation.navigate('Auth')} activeOpacity={0.8}>
+            <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={styles.buttonGradient}>
+              <Text style={styles.buttonText}>Comenzar</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -100,13 +114,15 @@ const styles = StyleSheet.create({
   buttonContainer: {
     position: 'absolute',
   },
-  button: {
-    backgroundColor: '#000',
+  buttonWrapper: {
+    borderRadius: 30,
+    overflow: 'hidden',
+  },
+  buttonGradient: {
     paddingVertical: 15,
     paddingHorizontal: 40,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: '#333',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
     color: '#fff',
