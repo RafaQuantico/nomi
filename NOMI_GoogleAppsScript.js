@@ -372,18 +372,21 @@ function handleTestCompleted(data) {
     audios.forEach((audio, idx) => {
       try {
         let extension = '.wav';
-        let safeNickname = nickname.replace(/\s+/g, '_').toLowerCase();
-        let safePhase = eventPhase === 'activo' ? 'am' : 'pm';
-        let safeLabel = audio.label.replace(/\s+/g, '_').toLowerCase();
-
-        const fileName = `${yyyymmdd}_${safeNickname}_${Date.now()}_${safePhase}_${safeLabel}${extension}`;
+        let sampleType = audio.label.includes('1') ? 'P1' : (audio.label.includes('2') ? 'P2' : audio.label.replace(/\s+/g, '_').toUpperCase());
+        let ts = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyyMMddHHmmss");
+        const fileName = `${shortId}_${sampleType}_${ts}${extension}`;
         const decoded = Utilities.newBlob(Utilities.base64Decode(audio.base64), audio.mimeType || 'audio/wav', fileName);
         const file = userFolder.createFile(decoded);
-        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
         driveLinks.push(file.getUrl());
         durations.push(audio.duration ? Math.round(audio.duration / 1000) : 0);
+        
+        try {
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        } catch (shareErr) {
+          // Si falla el permiso (por políticas de la empresa), el link ya se guardó igual
+        }
       } catch (err) {
-        driveLinks.push('');
+        driveLinks.push('ERROR: ' + err.message);
         durations.push(0);
       }
     });
@@ -500,8 +503,10 @@ function handleMentalHealthCompleted(data) {
       var fileName = "SaludMental_" + (data.target || 'general') + "_" + data.nickname + "_" + new Date().getTime() + (data.audio.mimeType === "audio/webm" ? ".webm" : ".m4a");
       var blob = Utilities.newBlob(byteCharacters, data.audio.mimeType, fileName);
       var file = folder.createFile(blob);
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       audioUrl = file.getUrl();
+      try {
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      } catch (e) {}
     }
 
     var initialAudioUrl = "Sin audio";
@@ -510,8 +515,10 @@ function handleMentalHealthCompleted(data) {
       var fileNameInit = "DatosBasicos_" + (data.target || 'general') + "_" + data.nickname + "_" + new Date().getTime() + (data.initialAudio.mimeType === "audio/webm" ? ".webm" : ".m4a");
       var blobInit = Utilities.newBlob(byteCharactersInit, data.initialAudio.mimeType, fileNameInit);
       var fileInit = folder.createFile(blobInit);
-      fileInit.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       initialAudioUrl = fileInit.getUrl();
+      try {
+        fileInit.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      } catch (e) {}
     }
 
     // --- LÓGICA DE CLASIFICACIÓN ---
@@ -737,7 +744,7 @@ function handleMentalHealthCompleted(data) {
 // -------------------------------------------------------
 // RECORDATORIOS AUTOMÁTICOS
 // -------------------------------------------------------
-const ENABLE_REMINDERS = false; // <-- CAMBIA ESTO A true PARA ENCENDER EL PILOTO MASIVO
+const ENABLE_REMINDERS = true; // <-- PILOTO MASIVO ACTIVADO
 
 const FRONTEND_APP_URL = "https://nomi-dun-phi.vercel.app/"; // <-- URL actualizada
 
@@ -821,7 +828,7 @@ function sendMorningReminders() {
     Logger.log("Los recordatorios automáticos están apagados (ENABLE_REMINDERS = false).");
     return;
   }
-  
+
   const now = new Date();
 
   const doc = SpreadsheetApp.openById(MASTER_SHEET_ID);
@@ -859,7 +866,7 @@ function sendMorningReminders() {
       Logger.log("-> Sin correo, saltando.");
       continue;
     }
-    
+
     Logger.log("-> Enviando correo a: " + email);
 
     const subject = `${APP_NAME} — ¡Hora de tu test (Inicio de Jornada)!`;
@@ -960,8 +967,17 @@ function setupExactTriggers() {
 
   const now = new Date();
 
-  // Programar 08:30
-  const morning = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 30, 0);
+  // Programar mañana
+  let mHour = 8;
+  let mMinute = 30;
+  
+  // Excepción: 22 de septiembre de 2026 a las 10:00
+  if (now.getFullYear() === 2026 && now.getMonth() === 8 && now.getDate() === 22) {
+    mHour = 10;
+    mMinute = 0;
+  }
+
+  const morning = new Date(now.getFullYear(), now.getMonth(), now.getDate(), mHour, mMinute, 0);
   if (morning > now) {
     ScriptApp.newTrigger('sendMorningReminders').timeBased().at(morning).create();
   }

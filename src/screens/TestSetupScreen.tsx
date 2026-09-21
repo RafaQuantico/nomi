@@ -9,6 +9,7 @@ import {
   ActivityIndicator
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RootStackParamList } from "../../App";
@@ -72,8 +73,11 @@ export default function TestSetupScreen({ navigation }: Props) {
             onPress={() => setSelected("activo")}
             activeOpacity={0.85}
           >
+            {selected === "activo" ? (
+              <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={StyleSheet.absoluteFillObject} />
+            ) : null}
             <View style={styles.iconWrapper}>
-              <Feather name="sun" size={32} color={selected === "activo" ? "#fff" : "#000"} />
+              <Feather name="sun" size={32} color={selected === "activo" ? "#fff" : "#374151"} />
             </View>
             <Text style={[styles.optionTitle, selected === "activo" && styles.optionTitleSelected]}>
               Inicio de Jornada
@@ -85,8 +89,11 @@ export default function TestSetupScreen({ navigation }: Props) {
             onPress={() => setSelected("cansado")}
             activeOpacity={0.85}
           >
+            {selected === "cansado" ? (
+              <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={StyleSheet.absoluteFillObject} />
+            ) : null}
             <View style={styles.iconWrapper}>
-              <Feather name="moon" size={32} color={selected === "cansado" ? "#fff" : "#000"} />
+              <Feather name="moon" size={32} color={selected === "cansado" ? "#fff" : "#374151"} />
             </View>
             <Text style={[styles.optionTitle, selected === "cansado" && styles.optionTitleSelected]}>
               Fin de Jornada
@@ -99,9 +106,13 @@ export default function TestSetupScreen({ navigation }: Props) {
           {scaleOptions.map((opt) => (
             <TouchableOpacity
               key={opt.value}
-              style={[styles.scaleOption, samnPerelli === opt.value && styles.scaleOptionSelected]}
+              style={[styles.scaleOption, samnPerelli === opt.value && styles.scaleOptionSelectedBorder]}
               onPress={() => setSamnPerelli(opt.value)}
+              activeOpacity={0.8}
             >
+              {samnPerelli === opt.value ? (
+                <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={StyleSheet.absoluteFillObject} />
+              ) : null}
               <Text style={[styles.scaleNum, samnPerelli === opt.value && styles.scaleTextSelected]}>{opt.value}</Text>
               <Text style={[styles.scaleLabel, samnPerelli === opt.value && styles.scaleTextSelected]}>{opt.label}</Text>
             </TouchableOpacity>
@@ -109,7 +120,7 @@ export default function TestSetupScreen({ navigation }: Props) {
         </View>
 
         <TouchableOpacity
-          style={[styles.startButton, (!selected || !samnPerelli) && styles.startButtonDisabled]}
+          style={styles.startButtonContainer}
           onPress={() => {
             if (selected && samnPerelli) {
               navigation.navigate("TestSequence", { eventPhase: selected, samnPerelli });
@@ -118,7 +129,15 @@ export default function TestSetupScreen({ navigation }: Props) {
           disabled={!selected || !samnPerelli}
           activeOpacity={0.8}
         >
-          <Text style={styles.startButtonText}>Continuar al Test</Text>
+          {(!selected || !samnPerelli) ? (
+            <View style={[styles.startButton, styles.startButtonDisabled]}>
+              <Text style={styles.startButtonTextDisabled}>Continuar al Test</Text>
+            </View>
+          ) : (
+            <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={styles.startButton}>
+              <Text style={styles.startButtonText}>Continuar al Test  ></Text>
+            </LinearGradient>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -129,18 +148,22 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   content: {
     padding: 24,
-    paddingBottom: 40
+    paddingBottom: 40,
+    maxWidth: 600,
+    width: "100%",
+    alignSelf: "center",
   },
   title: {
+    fontFamily: "Inter_800ExtraBold",
     fontSize: 26,
-    fontWeight: "900",
-    color: "#000",
+    color: "#1F2937",
     textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
-    color: "#666",
+    fontFamily: "Inter_400Regular",
+    fontSize: 15,
+    color: "#4B5563",
     textAlign: "center",
     marginBottom: 24,
   },
@@ -152,32 +175,32 @@ const styles = StyleSheet.create({
   },
   optionCard: {
     flex: 1,
-    borderWidth: 1.5,
-    borderColor: "#e0e0e0",
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 12,
     alignItems: "center",
-    backgroundColor: "#fafafa",
+    backgroundColor: "#F3F4F6",
+    overflow: "hidden",
   },
   optionCardSelected: {
-    borderColor: "#000",
-    backgroundColor: "#000",
+    // handled by LinearGradient background
   },
   iconWrapper: {
     marginBottom: 8,
+    zIndex: 1,
   },
   optionTitle: {
+    fontFamily: "Inter_600SemiBold",
     fontSize: 14,
-    fontWeight: "800",
-    color: "#000",
-    textAlign: "center"
+    color: "#374151",
+    textAlign: "center",
+    zIndex: 1,
   },
   optionTitleSelected: { color: "#fff" },
   sectionTitle: {
+    fontFamily: "Inter_700Bold",
     fontSize: 18,
-    fontWeight: "800",
-    color: "#000",
+    color: "#1F2937",
     marginBottom: 16,
   },
   scaleContainer: {
@@ -187,45 +210,53 @@ const styles = StyleSheet.create({
   scaleOption: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f9fafb",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
+    backgroundColor: "#F9FAFB",
     borderRadius: 12,
     padding: 12,
     gap: 12,
+    overflow: "hidden",
   },
-  scaleOptionSelected: {
-    backgroundColor: "#000",
-    borderColor: "#000",
+  scaleOptionSelectedBorder: {
+    // bg handled by linear gradient
   },
   scaleNum: {
+    fontFamily: "Inter_900Black",
     fontSize: 18,
-    fontWeight: "900",
     color: "#374151",
     width: 24,
-    textAlign: "center"
+    textAlign: "center",
+    zIndex: 1,
   },
   scaleLabel: {
     flex: 1,
+    fontFamily: "Inter_500Medium",
     fontSize: 14,
-    color: "#4b5563",
-    fontWeight: "500"
+    color: "#4B5563",
+    zIndex: 1,
   },
   scaleTextSelected: {
     color: "#fff"
   },
-  startButton: {
-    backgroundColor: "#000",
-    paddingVertical: 16,
+  startButtonContainer: {
     borderRadius: 14,
+    overflow: "hidden",
+  },
+  startButton: {
+    paddingVertical: 16,
     alignItems: "center",
+    justifyContent: "center",
   },
   startButtonDisabled: {
-    backgroundColor: "#d0d0d0",
+    backgroundColor: "#E5E7EB",
   },
   startButtonText: {
+    fontFamily: "Inter_600SemiBold",
     color: "#fff",
-    fontSize: 17,
-    fontWeight: "800",
+    fontSize: 16,
+  },
+  startButtonTextDisabled: {
+    fontFamily: "Inter_600SemiBold",
+    color: "#9CA3AF",
+    fontSize: 16,
   },
 });
