@@ -12,6 +12,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { useAuth } from '../context/AuthContext';
@@ -168,14 +169,16 @@ export default function AuthScreen({ navigation }: Props) {
 
           {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
 
-          <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>
-                {mode === 'create' ? 'Crear cuenta' : 'Iniciar sesión'}
-              </Text>
-            )}
+          <TouchableOpacity style={styles.buttonContainer} onPress={handleSubmit} disabled={loading} activeOpacity={0.8}>
+            <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={styles.buttonGradient}>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>
+                  {mode === 'create' ? 'Crear cuenta' : 'Iniciar sesión'}
+                </Text>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -187,33 +190,36 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { flexGrow: 1, padding: 28, justifyContent: 'center' },
   logo: { width: 180, height: 60, alignSelf: 'center', marginBottom: 28 },
-  title: { fontSize: 26, fontWeight: '900', color: '#000', textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#555', textAlign: 'center', marginTop: 6, marginBottom: 28 },
+  title: { fontSize: 26, fontFamily: "Inter_900Black", color: "#1F2937", textAlign: 'center' },
+  subtitle: { fontSize: 14, color: "#4B5563", textAlign: 'center', marginTop: 6, marginBottom: 28 },
   tabs: { flexDirection: 'row', backgroundColor: '#f0f0f0', borderRadius: 12, padding: 4, marginBottom: 24 },
   tab: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
   tabActive: { backgroundColor: '#000' },
-  tabText: { fontSize: 14, fontWeight: '700', color: '#666' },
+  tabText: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#4B5563" },
   tabTextActive: { color: '#fff' },
   form: { gap: 16 },
   fieldGroup: { gap: 6 },
-  label: { fontSize: 13, fontWeight: '700', color: '#333' },
-  helperText: { fontSize: 11, color: '#888', marginTop: -2 },
+  label: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#374151" },
+  helperText: { fontSize: 11, color: "#9CA3AF", marginTop: -2 },
   input: {
     borderWidth: 1.5,
     borderColor: '#ddd',
     borderRadius: 10,
     padding: 13,
     fontSize: 15,
-    color: '#000',
+    color: "#1F2937",
     backgroundColor: '#fafafa',
   },
   error: { color: '#e53e3e', fontSize: 13, textAlign: 'center' },
-  button: {
-    backgroundColor: '#000',
+  buttonContainer: {
     borderRadius: 12,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  buttonGradient: {
     paddingVertical: 15,
     alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'center',
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  buttonText: { color: '#fff', fontSize: 16, fontFamily: "Inter_800ExtraBold" },
 });

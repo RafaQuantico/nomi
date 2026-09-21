@@ -136,16 +136,16 @@ const styles = StyleSheet.create({
   },
   questionNumber: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#888',
+    fontFamily: "Inter_700Bold",
+    color: "#9CA3AF",
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 8,
   },
   title: {
     fontSize: 26,
-    fontWeight: '900',
-    color: '#000',
+    fontFamily: "Inter_900Black",
+    color: "#1F2937",
     lineHeight: 34,
   },
   optionsContainer: {
@@ -187,13 +187,13 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 17,
-    fontWeight: '600',
-    color: '#333',
+    fontFamily: "Inter_600SemiBold",
+    color: "#374151",
     flex: 1,
   },
   optionTextSelected: {
     color: '#78350f',
-    fontWeight: '800',
+    fontFamily: "Inter_800ExtraBold",
   },
   continueButton: {
     backgroundColor: '#000',
@@ -210,6 +210,6 @@ const styles = StyleSheet.create({
   continueButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '800',
+    fontFamily: "Inter_800ExtraBold",
   },
 });

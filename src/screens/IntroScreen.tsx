@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: "Inter_800ExtraBold",
     textAlign: 'center',
   },
   quanticoLogo: {

@@ -70,14 +70,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: '800',
-    color: '#000',
+    fontFamily: "Inter_800ExtraBold",
+    color: "#1F2937",
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: "#4B5563",
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 24,
@@ -102,6 +102,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '800',
+    fontFamily: "Inter_800ExtraBold",
   },
 });

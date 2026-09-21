@@ -95,13 +95,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '900',
-    color: '#000',
+    fontFamily: "Inter_900Black",
+    color: "#1F2937",
     marginBottom: 12,
   },
   subtitle: {
     fontSize: 16,
-    color: '#555',
+    color: "#4B5563",
     lineHeight: 24,
   },
   optionsContainer: {
@@ -135,12 +135,12 @@ const styles = StyleSheet.create({
   },
   optionTitle: {
     fontSize: 17,
-    fontWeight: '800',
-    color: '#000',
+    fontFamily: "Inter_800ExtraBold",
+    color: "#1F2937",
     marginBottom: 4,
   },
   optionSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: "#4B5563",
   },
 });

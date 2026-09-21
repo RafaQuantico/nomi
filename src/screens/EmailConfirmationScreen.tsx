@@ -115,14 +115,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    fontWeight: '900',
-    color: '#000',
+    fontFamily: "Inter_900Black",
+    color: "#1F2937",
     textAlign: 'center',
     marginBottom: 14,
   },
   body: {
     fontSize: 15,
-    color: '#555',
+    color: "#4B5563",
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     color: '#fff',
     fontSize: 13,
-    fontWeight: '900',
+    fontFamily: "Inter_900Black",
     textAlign: 'center',
     lineHeight: 28,
     flexShrink: 0,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   continueButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '800',
+    fontFamily: "Inter_800ExtraBold",
   },
   footerNote: {
     fontSize: 11,

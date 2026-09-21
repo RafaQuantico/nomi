@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '900',
-    color: '#000',
+    fontFamily: "Inter_900Black",
+    color: "#1F2937",
     textAlign: 'center',
   },
   card: {
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     color: '#78350f',
     lineHeight: 24,
     marginBottom: 16,
-    fontWeight: '500',
+    fontFamily: "Inter_500Medium",
   },
   buttonsContainer: {
     gap: 16,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   continueButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '800',
+    fontFamily: "Inter_800ExtraBold",
   },
   backButton: {
     backgroundColor: '#f5f5f5',
@@ -130,8 +130,8 @@ const styles = StyleSheet.create({
     borderColor: '#eee',
   },
   backButtonText: {
-    color: '#555',
+    color: "#4B5563",
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: "Inter_700Bold",
   },
 });

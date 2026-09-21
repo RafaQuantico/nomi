@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   subtitleText: {
     fontSize: 24,
     lineHeight: 36,
-    fontWeight: '600',
+    fontFamily: "Inter_600SemiBold",
     color: '#111',
     textAlign: 'center',
   },
@@ -243,6 +243,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: "Inter_700Bold",
   },
 });

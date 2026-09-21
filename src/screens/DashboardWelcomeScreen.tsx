@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Platform, Image } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../../App';
@@ -35,8 +36,10 @@ export default function DashboardWelcomeScreen() {
 
         <View style={{ flex: 1 }} />
 
-        <TouchableOpacity style={styles.button} onPress={handleContinue}>
-          <Text style={styles.buttonText}>Revisar resultados</Text>
+        <TouchableOpacity style={styles.buttonContainer} onPress={handleContinue} activeOpacity={0.8}>
+          <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={styles.buttonGradient}>
+            <Text style={styles.buttonText}>Revisar resultados</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -64,29 +67,32 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '800',
-    color: '#000',
+    fontFamily: "Inter_800ExtraBold",
+    color: "#1F2937",
     textAlign: 'center',
     marginBottom: 16,
   },
   subtitle: {
     fontSize: 16,
-    color: '#555',
+    color: "#4B5563",
     textAlign: 'center',
     lineHeight: 24,
+    fontFamily: "Inter_400Regular"
   },
-  button: {
+  buttonContainer: {
     width: '100%',
-    height: 56,
-    backgroundColor: '#000',
     borderRadius: 12,
+    marginBottom: 32,
+    overflow: 'hidden',
+  },
+  buttonGradient: {
+    height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '800',
+    fontFamily: "Inter_800ExtraBold",
   },
 });

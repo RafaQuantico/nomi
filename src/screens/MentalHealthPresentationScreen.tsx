@@ -75,8 +75,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '900',
-    color: '#000',
+    fontFamily: "Inter_900Black",
+    color: "#1F2937",
   },
   card: {
     backgroundColor: '#f8f8f8',
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   },
   paragraph: {
     fontSize: 16,
-    color: '#333',
+    color: "#374151",
     lineHeight: 24,
     marginBottom: 16,
   },
@@ -106,6 +106,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: "Inter_700Bold",
   },
 });

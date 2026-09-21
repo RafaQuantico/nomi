@@ -8,6 +8,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { useAuth } from '../context/AuthContext';
@@ -68,10 +69,13 @@ export default function ServiceSelectionScreen({ navigation }: Props) {
               onPress={service.active ? () => handleServicePress(service.id) : undefined}
               activeOpacity={service.active ? 0.7 : 1}
             >
-              <View style={styles.cardIconWrapper}>
+              {service.active && (
+                <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={StyleSheet.absoluteFillObject} />
+              )}
+              <View style={[styles.cardIconWrapper, { zIndex: 1 }]}>
                 <ServiceCardIcon lib={service.iconLib} name={service.iconName} active={service.active} />
               </View>
-              <Text style={[styles.cardTitle, !service.active && styles.titleInactive]}>
+              <Text style={[styles.cardTitle, !service.active && styles.titleInactive, { zIndex: 1 }]}>
                 {service.title}
               </Text>
               {!service.active && (
@@ -102,15 +106,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 32,
   },
-  greeting: { fontSize: 22, fontWeight: '900', color: '#000' },
-  subtitle: { fontSize: 14, color: '#666', marginTop: 2 },
+  greeting: { fontSize: 22, fontFamily: "Inter_900Black", color: "#1F2937" },
+  subtitle: { fontSize: 14, color: "#4B5563", marginTop: 2 },
   logoutBtn: {
     backgroundColor: '#f0f0f0',
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,
   },
-  logoutText: { fontSize: 13, fontWeight: '700', color: '#333' },
+  logoutText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#374151" },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -130,9 +134,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardActive: {
-    backgroundColor: '#000',
-    borderWidth: 2,
-    borderColor: '#000',
+    // bg handled by LinearGradient
   },
   cardInactive: {
     backgroundColor: '#f5f5f5',
@@ -147,12 +149,12 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '800',
+    fontFamily: "Inter_800ExtraBold",
     color: '#fff',
     textAlign: 'center',
   },
   titleInactive: {
-    color: '#999',
+    color: "#9CA3AF",
   },
   comingSoonBadge: {
     position: 'absolute',
@@ -165,7 +167,7 @@ const styles = StyleSheet.create({
   },
   comingSoonText: {
     fontSize: 9,
-    fontWeight: '700',
-    color: '#888',
+    fontFamily: "Inter_700Bold",
+    color: "#9CA3AF",
   },
 });

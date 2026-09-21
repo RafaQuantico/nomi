@@ -7,8 +7,10 @@ import {
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
+  Modal,
   Alert
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
@@ -87,8 +89,10 @@ export default function FatigueSubstanceScreen({ route, navigation }: Props) {
           <Text style={styles.completedTitle}>¡Test Completado!</Text>
           <Text style={styles.completedBody}>Tus respuestas han sido enviadas de forma segura y confidencial. ¡Gracias por participar!</Text>
           <TouchableOpacity style={styles.doneButton} onPress={() => navigation.navigate("ServiceSelection")}>
-            <Text style={styles.doneButtonText}>Volver al Inicio</Text>
-          </TouchableOpacity>
+              <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={styles.doneButtonGradient}>
+                <Text style={styles.doneButtonText}>Ir al test</Text>
+              </LinearGradient>
+            </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -146,16 +150,18 @@ export default function FatigueSubstanceScreen({ route, navigation }: Props) {
         )}
 
         <TouchableOpacity
-          style={[styles.continueButton, isSubmitting && styles.continueButtonDisabled]}
+          style={styles.continueButtonContainer}
           onPress={handleFinish}
           disabled={isSubmitting}
           activeOpacity={0.8}
         >
-          {isSubmitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.continueButtonText}>Finalizar</Text>
-          )}
+          <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={[styles.continueButtonGradient, isSubmitting && styles.continueButtonDisabled]}>
+            {isSubmitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.continueButtonText}>Finalizar</Text>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -170,11 +176,11 @@ const styles = StyleSheet.create({
   },
   header: { marginBottom: 32 },
   questionNumber: {
-    fontSize: 14, fontWeight: '700', color: '#888',
+    fontSize: 14, fontFamily: "Inter_700Bold", color: "#9CA3AF",
     textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8,
   },
-  title: { fontSize: 22, fontWeight: '900', color: '#000', lineHeight: 30 },
-  subTitle: { fontSize: 18, fontWeight: '700', color: '#333', marginBottom: 16 },
+  title: { fontSize: 22, fontFamily: "Inter_900Black", color: "#1F2937", lineHeight: 30 },
+  subTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#374151", marginBottom: 16 },
   optionsContainer: { gap: 12, marginBottom: 24 },
   substancesSection: { marginTop: 16 },
   optionCard: {
@@ -182,14 +188,19 @@ const styles = StyleSheet.create({
     padding: 16, borderRadius: 12, borderWidth: 2, borderColor: '#eee', gap: 12
   },
   optionCardSelected: { backgroundColor: '#fff8e1', borderColor: '#f59e0b' },
-  optionText: { fontSize: 16, fontWeight: '600', color: '#333' },
-  optionTextSelected: { color: '#78350f', fontWeight: '800' },
-  continueButton: {
-    backgroundColor: '#000', padding: 18, borderRadius: 12,
-    alignItems: 'center', marginTop: 'auto'
+  optionText: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: "#374151" },
+  optionTextSelected: { color: '#78350f', fontFamily: "Inter_800ExtraBold" },
+  continueButtonContainer: {
+    borderRadius: 12,
+    marginTop: 'auto',
+    overflow: 'hidden',
+  },
+  continueButtonGradient: {
+    padding: 18,
+    alignItems: 'center',
   },
   continueButtonDisabled: { opacity: 0.7 },
-  continueButtonText: { color: '#fff', fontSize: 18, fontWeight: '800' },
+  continueButtonText: { color: '#fff', fontSize: 18, fontFamily: "Inter_800ExtraBold" },
   
   completedContainer: {
     flex: 1, justifyContent: "center", alignItems: "center", padding: 32,
@@ -199,8 +210,9 @@ const styles = StyleSheet.create({
     width: 96, height: 96, borderRadius: 48, backgroundColor: "#16a34a",
     justifyContent: "center", alignItems: "center", marginBottom: 24,
   },
-  completedTitle: { fontSize: 28, fontWeight: "900", color: "#000", marginBottom: 12, textAlign: "center" },
-  completedBody: { fontSize: 16, color: "#555", textAlign: "center", lineHeight: 24, marginBottom: 40 },
-  doneButton: { backgroundColor: "#000", paddingVertical: 16, paddingHorizontal: 32, borderRadius: 12 },
-  doneButtonText: { color: "#fff", fontSize: 18, fontWeight: "800" },
+  completedTitle: { fontSize: 28, fontFamily: "Inter_900Black", color: "#1F2937", marginBottom: 12, textAlign: "center" },
+  completedBody: { fontSize: 16, color: "#4B5563", textAlign: "center", lineHeight: 24, marginBottom: 40 },
+  doneButton: { borderRadius: 12, overflow: 'hidden' },
+  doneButtonGradient: { paddingVertical: 16, paddingHorizontal: 32, alignItems: 'center' },
+  doneButtonText: { color: "#fff", fontSize: 18, fontFamily: "Inter_800ExtraBold" },
 });

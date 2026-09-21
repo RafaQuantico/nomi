@@ -757,7 +757,7 @@ const WHATSAPP_TEMPLATE_MORNING = "recordatorio_manana"; // Nombre de la plantil
 const WHATSAPP_TEMPLATE_EVENING = "recordatorio_tarde";  // Nombre de la plantilla en Meta
 
 function sendWhatsAppReminder(phone, nickname, templateName) {
-  if (WHATSAPP_TOKEN === "AQUÍ_VA_EL_TOKEN_DE_META" || !phone) return;
+  if (!WHATSAPP_TOKEN || !phone) return;
 
   const cleanPhone = phone.toString().replace(/\D/g, '');
   if (cleanPhone.length < 8) return; // Permitir números internacionales más cortos

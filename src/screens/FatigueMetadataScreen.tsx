@@ -12,6 +12,7 @@ import {
   ScrollView,
   ActivityIndicator
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -171,18 +172,21 @@ export default function FatigueMetadataScreen({ navigation }: Props) {
           </View>
 
           <TouchableOpacity 
-            style={styles.button} 
+            style={styles.buttonContainer} 
             onPress={handleContinue}
             disabled={isSubmitting}
+            activeOpacity={0.8}
           >
-            {isSubmitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <Text style={styles.buttonText}>Continuar</Text>
-                <Feather name="arrow-right" size={20} color="#fff" />
-              </>
-            )}
+            <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={styles.buttonGradient}>
+              {isSubmitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Text style={styles.buttonText}>Continuar</Text>
+                  <Feather name="arrow-right" size={20} color="#fff" />
+                </>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -193,10 +197,10 @@ export default function FatigueMetadataScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   content: { padding: 32, flexGrow: 1, justifyContent: "center" },
-  title: { fontSize: 28, fontWeight: "900", color: "#000", marginBottom: 12 },
+  title: { fontSize: 28, fontFamily: "Inter_900Black", color: "#1F2937", marginBottom: 12 },
   subtitle: { fontSize: 16, color: "#6b7280", lineHeight: 24, marginBottom: 40 },
   inputGroup: { marginBottom: 24 },
-  label: { fontSize: 14, fontWeight: "600", color: "#374151", marginBottom: 8 },
+  label: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#374151", marginBottom: 8 },
   input: {
     backgroundColor: "#f9fafb",
     borderWidth: 1,
@@ -204,7 +208,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: "#000",
+    color: "#1F2937",
   },
   row: { flexDirection: "row", gap: 12 },
   selectBtn: {
@@ -222,21 +226,23 @@ const styles = StyleSheet.create({
   },
   selectBtnText: {
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "Inter_600SemiBold",
     color: "#6b7280",
   },
   selectBtnTextActive: {
     color: "#fff",
   },
-  button: {
-    backgroundColor: "#000",
+  buttonContainer: {
     borderRadius: 12,
+    marginTop: 20,
+    overflow: "hidden",
+  },
+  buttonGradient: {
     padding: 18,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 20,
     gap: 8,
   },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  buttonText: { color: "#fff", fontSize: 16, fontFamily: "Inter_700Bold" },
 });

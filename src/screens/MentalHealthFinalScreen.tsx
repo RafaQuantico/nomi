@@ -218,22 +218,22 @@ const styles = StyleSheet.create({
   },
   header: { marginBottom: 32 },
   questionNumber: {
-    fontSize: 14, fontWeight: '700', color: '#888',
+    fontSize: 14, fontFamily: "Inter_700Bold", color: "#9CA3AF",
     textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8,
   },
-  title: { fontSize: 22, fontWeight: '900', color: '#000', lineHeight: 30 },
+  title: { fontSize: 22, fontFamily: "Inter_900Black", color: "#1F2937", lineHeight: 30 },
   optionsContainer: { gap: 12, marginBottom: 24 },
   optionCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8f8f8',
     padding: 16, borderRadius: 12, borderWidth: 2, borderColor: '#eee', gap: 12
   },
   optionCardSelected: { backgroundColor: '#fff8e1', borderColor: '#f59e0b' },
-  optionText: { fontSize: 16, fontWeight: '600', color: '#333' },
-  optionTextSelected: { color: '#78350f', fontWeight: '800' },
+  optionText: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: "#374151" },
+  optionTextSelected: { color: '#78350f', fontFamily: "Inter_800ExtraBold" },
   inputSection: { marginBottom: 40, minHeight: 150 },
   textInput: {
     backgroundColor: '#f8f8f8', borderRadius: 12, padding: 16,
-    fontSize: 16, color: '#333', borderWidth: 2, borderColor: '#eee',
+    fontSize: 16, color: "#374151", borderWidth: 2, borderColor: '#eee',
     minHeight: 150,
   },
   recorderContainer: {
@@ -259,22 +259,22 @@ const styles = StyleSheet.create({
   recordButtonActive: {
     backgroundColor: '#ef4444', // Rojo al estar grabando
   },
-  recordButtonText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  recordButtonText: { fontSize: 12, fontFamily: "Inter_700Bold", color: '#fff' },
   audioDoneContainer: { alignItems: 'center', gap: 16 },
   audioDoneBadge: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#dcfce7',
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, gap: 8
   },
-  audioDoneText: { color: '#16a34a', fontWeight: '700' },
+  audioDoneText: { color: '#16a34a', fontFamily: "Inter_700Bold" },
   retakeButton: { flexDirection: 'row', alignItems: 'center', padding: 8 },
-  retakeButtonText: { color: '#555', fontWeight: '600' },
+  retakeButtonText: { color: "#4B5563", fontFamily: "Inter_600SemiBold" },
   continueButton: {
     backgroundColor: '#000', borderRadius: 14, paddingVertical: 18, alignItems: 'center',
     marginTop: 'auto', shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1, shadowRadius: 8, elevation: 4,
   },
   continueButtonDisabled: { backgroundColor: '#555' },
-  continueButtonText: { color: '#fff', fontSize: 18, fontWeight: '800' },
+  continueButtonText: { color: '#fff', fontSize: 18, fontFamily: "Inter_800ExtraBold" },
   waveform: {
     flexDirection: 'row',
     alignItems: 'flex-end',

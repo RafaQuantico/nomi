@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '800',
+    fontFamily: "Inter_800ExtraBold",
     color: '#111',
     marginBottom: 16,
   },
@@ -187,8 +187,8 @@ const styles = StyleSheet.create({
   },
   instruction: {
     fontSize: 18,
-    color: '#000',
-    fontWeight: '600',
+    color: "#1F2937",
+    fontFamily: "Inter_600SemiBold",
     lineHeight: 26,
   },
   recorderWrapper: {
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   recordButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: "Inter_700Bold",
     marginTop: 8,
   },
   waveform: {
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   },
   audioDoneText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: "Inter_600SemiBold",
     color: '#16a34a',
     marginLeft: 8,
   },
@@ -263,8 +263,8 @@ const styles = StyleSheet.create({
     borderColor: '#d1d5db',
   },
   retakeButtonText: {
-    color: '#555',
-    fontWeight: '600',
+    color: "#4B5563",
+    fontFamily: "Inter_600SemiBold",
   },
   disclaimerBox: {
     backgroundColor: '#f3f4f6',
@@ -299,6 +299,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: "Inter_700Bold",
   },
 });
