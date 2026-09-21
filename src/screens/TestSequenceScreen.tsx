@@ -302,6 +302,7 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
   );
 }
 
+const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   content: { flex: 1, padding: 24, alignItems: "center", paddingTop: 40 },
   logo: { width: 120, height: 40, marginBottom: 16 },
