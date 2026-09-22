@@ -276,15 +276,17 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
 
             <View style={{ flex: 1 }} />
 
-            <View style={{ flexDirection: "row", gap: 20, marginBottom: 60 }}>
-              <TouchableOpacity style={styles.discardButton} onPress={handleDiscardRecording}>
-                <Feather name="trash-2" size={24} color="#EF4444" />
-                <Text style={styles.discardButtonText}>Grabar de nuevo</Text>
+            <View style={{ width: "100%", gap: 16, marginBottom: 60, paddingHorizontal: 20 }}>
+              <TouchableOpacity style={styles.confirmButtonWrapper} onPress={handleConfirmRecording} activeOpacity={0.8}>
+                <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={styles.confirmButtonGradient}>
+                  <Feather name="send" size={20} color="#fff" />
+                  <Text style={styles.confirmButtonText}>Enviar / Continuar</Text>
+                </LinearGradient>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmRecording}>
-                <Feather name="send" size={24} color="#fff" />
-                <Text style={styles.confirmButtonText}>Enviar / Continuar</Text>
+              <TouchableOpacity style={styles.discardButton} onPress={handleDiscardRecording} activeOpacity={0.8}>
+                <Feather name="trash-2" size={20} color="#FCA5A5" />
+                <Text style={styles.discardButtonText}>Grabar de nuevo</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -416,10 +418,11 @@ const styles = StyleSheet.create({
   fabContainer: { position: "absolute", flexDirection: "row", gap: 40 },
   fabButton: { width: 64, height: 64, borderRadius: 32, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", elevation: 5, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 6 },
   
-  discardButton: { backgroundColor: "#FEE2E2", paddingVertical: 16, paddingHorizontal: 24, borderRadius: 12, flexDirection: "row", alignItems: "center", gap: 8 },
-  discardButtonText: { fontFamily: "Inter_600SemiBold", color: "#EF4444", fontSize: 16 },
-  confirmButton: { backgroundColor: "#10B981", paddingVertical: 16, paddingHorizontal: 24, borderRadius: 12, flexDirection: "row", alignItems: "center", gap: 8 },
-  confirmButtonText: { fontFamily: "Inter_600SemiBold", color: "#fff", fontSize: 16 },
+  discardButton: { backgroundColor: "rgba(239, 68, 68, 0.15)", paddingVertical: 16, borderRadius: 12, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1, borderColor: "rgba(239, 68, 68, 0.3)" },
+  discardButtonText: { fontFamily: "Inter_600SemiBold", color: "#FCA5A5", fontSize: 16 },
+  confirmButtonWrapper: { borderRadius: 12, overflow: "hidden" },
+  confirmButtonGradient: { paddingVertical: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
+  confirmButtonText: { fontFamily: "Inter_800ExtraBold", color: "#fff", fontSize: 16 },
   
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.65)", justifyContent: "center", alignItems: "center", padding: 28 },
   modalCard: { backgroundColor: "#fff", borderRadius: 24, padding: 32, alignItems: "center", width: "100%", maxWidth: 340 },
