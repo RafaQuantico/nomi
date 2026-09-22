@@ -173,8 +173,9 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
 
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Modal Cuenta Regresiva */}
+    <View style={styles.container}>
+      <SafeAreaView style={{ flex: 1 }}>
+        {/* Modal Cuenta Regresiva */}
       <Modal visible={showCountdown} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -261,6 +262,7 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
           </View>
         )}
       </View>
+      </SafeAreaView>
 
       {/* Overlay de Confirmación Post-Grabación */}
       {pendingRecording && (
@@ -365,7 +367,7 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
           </View>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
