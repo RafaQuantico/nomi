@@ -247,7 +247,14 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
         <View style={styles.recordingOverlay} pointerEvents="box-none">
           <View style={styles.recordingOverlayContent}>
             
-            <View style={{ height: 120 }} /> {/* Espaciador para no tapar el título del fondo opacado */}
+            <View style={{ height: 60 }} /> {/* Espaciador */}
+            
+            <View style={styles.instructionsBoxDark}>
+              <Text style={styles.instructionMainDark}>{currentStep.instruction}</Text>
+              <Text style={styles.instructionHighlightDark}>{currentStep.highlight}</Text>
+            </View>
+
+            <View style={{ height: 20 }} />
 
             <Text style={styles.recordingTopLabel}>REGISTRANDO TEST</Text>
             <Text style={styles.recordingTimer}>
@@ -313,6 +320,10 @@ const styles = StyleSheet.create({
   instructionsBox: { alignItems: "center", marginBottom: 36, paddingHorizontal: 16 },
   instructionMain: { fontFamily: "Inter_500Medium", fontSize: 13, color: "#374151", textAlign: "center", lineHeight: 20, marginBottom: 16 },
   instructionHighlight: { fontFamily: "Inter_700Bold", fontSize: 26, color: "#1F2937", textAlign: "center", lineHeight: 34 },
+  
+  instructionsBoxDark: { alignItems: "center", marginBottom: 16, paddingHorizontal: 16 },
+  instructionMainDark: { fontFamily: "Inter_500Medium", fontSize: 13, color: "#9CA3AF", textAlign: "center", lineHeight: 20, marginBottom: 16 },
+  instructionHighlightDark: { fontFamily: "Inter_700Bold", fontSize: 26, color: "#F9FAFB", textAlign: "center", lineHeight: 34 },
   
   processingBox: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 28 },
   processingText: { fontFamily: "Inter_500Medium", fontSize: 15, color: "#4B5563" },
