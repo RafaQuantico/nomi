@@ -190,7 +190,7 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
         {!isProcessing && (
           <View style={styles.instructionsBox}>
             <Text style={styles.instructionMain}>{currentStep.instruction}</Text>
-            <Text style={styles.instructionHighlight}>{currentStep.highlight}</Text>
+            <Text style={[styles.instructionHighlight, stepIndex === 1 && { fontSize: 18, lineHeight: 28 }]}>{currentStep.highlight}</Text>
           </View>
         )}
 
@@ -251,7 +251,7 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
             
             <View style={styles.instructionsBoxDark}>
               <Text style={styles.instructionMainDark}>{currentStep.instruction}</Text>
-              <Text style={styles.instructionHighlightDark}>{currentStep.highlight}</Text>
+              <Text style={[styles.instructionHighlightDark, stepIndex === 1 && { fontSize: 18, lineHeight: 28 }]}>{currentStep.highlight}</Text>
             </View>
 
             <View style={{ height: 20 }} />
