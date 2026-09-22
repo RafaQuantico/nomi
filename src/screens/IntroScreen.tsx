@@ -22,19 +22,12 @@ export default function IntroScreen({ navigation }: Props) {
   const isDesktop = width > 768;
 
   const nomiOpacity = useRef(new Animated.Value(0)).current;
-  const quanticoOpacity = useRef(new Animated.Value(0)).current;
   const buttonOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(nomiOpacity, {
       toValue: 1, duration: 1000, useNativeDriver: true,
     }).start();
-
-    setTimeout(() => {
-      Animated.timing(quanticoOpacity, {
-        toValue: 1, duration: 500, useNativeDriver: true,
-      }).start();
-    }, 1000);
 
     setTimeout(() => {
       Animated.parallel([
@@ -83,12 +76,6 @@ export default function IntroScreen({ navigation }: Props) {
           </TouchableOpacity>
         </Animated.View>
       </View>
-
-      <Animated.Image
-        source={require('../../assets/logo_hor.png')}
-        style={[styles.quanticoLogo, { opacity: quanticoOpacity }]}
-        resizeMode="contain"
-      />
     </View>
   );
 }
@@ -129,11 +116,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "Inter_800ExtraBold",
     textAlign: 'center',
-  },
-  quanticoLogo: {
-    position: 'absolute',
-    bottom: 50,
-    width: 120,
-    height: 40,
   },
 });
