@@ -2,7 +2,9 @@ import { useState, useRef, useCallback } from "react";
 
 export function useWavRecorder() {
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const isRecordingRef = useRef(false);
+  const isPausedRef = useRef(false);
   const actualSampleRate = useRef<number>(44100);
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -43,7 +45,7 @@ export function useWavRecorder() {
       audioDataRef.current = [];
 
       processor.onaudioprocess = (e) => {
-        if (!isRecordingRef.current) return;
+        if (!isRecordingRef.current || isPausedRef.current) return;
         const inputData = e.inputBuffer.getChannelData(0);
         // We must clone the data because the browser reuses the buffer
         audioDataRef.current.push(new Float32Array(inputData));
@@ -54,12 +56,24 @@ export function useWavRecorder() {
 
       setIsRecording(true);
       isRecordingRef.current = true;
+      setIsPaused(false);
+      isPausedRef.current = false;
       recordingStartTime.current = Date.now();
     } catch (error) {
       console.error("Error starting recording:", error);
       throw error;
     }
   }, [isRecording]);
+
+  const pauseRecording = useCallback(() => {
+    setIsPaused(true);
+    isPausedRef.current = true;
+  }, []);
+
+  const resumeRecording = useCallback(() => {
+    setIsPaused(false);
+    isPausedRef.current = false;
+  }, []);
 
   const stopRecording = useCallback(async (): Promise<{ base64: string; duration: number } | null> => {
     setIsRecording(false);
@@ -77,8 +91,6 @@ export function useWavRecorder() {
     if (audioContextRef.current && audioContextRef.current.state !== "closed") {
       await audioContextRef.current.close();
     }
-
-    const duration = Date.now() - recordingStartTime.current;
 
     // Flatten all the Float32Arrays into one
     let totalLength = 0;
@@ -136,13 +148,16 @@ export function useWavRecorder() {
       view.setInt16(offsetData, int16Data[i], true);
     }
     
+    // Calculate accurate duration based on buffer length
+    const duration = (totalLength / actualSampleRate.current) * 1000;
+
     // Convert ArrayBuffer to Base64
     const base64String = arrayBufferToBase64(buffer);
     
     return { base64: base64String, duration };
   }, []);
 
-  return { isRecording, startRecording, stopRecording, requestPermission };
+  return { isRecording, isPaused, startRecording, pauseRecording, resumeRecording, stopRecording, requestPermission };
 }
 
 function writeString(view: DataView, offset: number, string: string) {

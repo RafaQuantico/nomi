@@ -26,10 +26,11 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
   const { eventPhase, samnPerelli } = route.params;
   const { user } = useAuth();
   
-  const { isRecording, startRecording, stopRecording, requestPermission } = useWavRecorder();
+  const { isRecording, isPaused, startRecording, pauseRecording, resumeRecording, stopRecording, requestPermission } = useWavRecorder();
   
   const [stepIndex, setStepIndex] = useState(0);
   const [recordings, setRecordings] = useState<{ label: string; base64: string; mimeType: string; duration?: number }[]>([]);
+  const [pendingRecording, setPendingRecording] = useState<{ base64: string; duration: number } | null>(null);
   const [testStartTime, setTestStartTime] = useState<number | null>(null);
   
   const [isProcessing, setIsProcessing] = useState(false);
@@ -52,26 +53,33 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
 
   useEffect(() => {
     if (isRecording) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.05, duration: 600, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-        ])
-      ).start();
-      
-      setRecordingSeconds(0);
-      timerRef.current = setInterval(() => {
-        setRecordingSeconds(prev => prev + 1);
-      }, 1000);
+      if (!isPaused) {
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(pulseAnim, { toValue: 1.05, duration: 600, useNativeDriver: true }),
+            Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+          ])
+        ).start();
+        
+        timerRef.current = setInterval(() => {
+          setRecordingSeconds(prev => prev + 1);
+        }, 1000);
+      } else {
+        pulseAnim.stopAnimation();
+        pulseAnim.setValue(1);
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     } else {
       pulseAnim.stopAnimation();
       pulseAnim.setValue(1);
       if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRecording]);
+  }, [isRecording, isPaused]);
 
   const steps = [
     {
@@ -116,6 +124,7 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
   };
 
   const handleStartRecording = async () => {
+    setRecordingSeconds(0);
     try {
       await startRecording();
     } catch (e) {
@@ -129,19 +138,8 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
     try {
       const result = await stopRecording();
       if (result) {
-        const newRecordings = [...recordings, { label: "Paso " + (stepIndex + 1), base64: result.base64, mimeType: "audio/wav", duration: result.duration }];
-        setRecordings(newRecordings);
-        
         setIsProcessing(false);
-        setShowThankYou(true);
-        setTimeout(() => {
-          setShowThankYou(false);
-          if (stepIndex < steps.length - 1) {
-            setStepIndex(stepIndex + 1);
-          } else {
-            navigation.replace("FatigueSubstance", { recordings: newRecordings, eventPhase, samnPerelli, testStartTime: testStartTime || Date.now() });
-          }
-        }, 1500);
+        setPendingRecording(result);
       } else {
         throw new Error("No audio generated");
       }
@@ -149,6 +147,28 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
       setIsProcessing(false);
       Alert.alert("Error", "Falló la grabación.");
     }
+  };
+
+  const handleConfirmRecording = () => {
+    if (!pendingRecording) return;
+    const newRecordings = [...recordings, { label: "Paso " + (stepIndex + 1), base64: pendingRecording.base64, mimeType: "audio/wav", duration: pendingRecording.duration }];
+    setRecordings(newRecordings);
+    setPendingRecording(null);
+    
+    setShowThankYou(true);
+    setTimeout(() => {
+      setShowThankYou(false);
+      if (stepIndex < steps.length - 1) {
+        setStepIndex(stepIndex + 1);
+      } else {
+        navigation.replace("FatigueSubstance", { recordings: newRecordings, eventPhase, samnPerelli, testStartTime: testStartTime || Date.now() });
+      }
+    }, 1500);
+  };
+
+  const handleDiscardRecording = () => {
+    setPendingRecording(null);
+    setRecordingSeconds(0);
   };
 
 
@@ -242,6 +262,35 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
         )}
       </View>
 
+      {/* Overlay de Confirmación Post-Grabación */}
+      {pendingRecording && (
+        <View style={styles.recordingOverlay} pointerEvents="box-none">
+          <View style={styles.recordingOverlayContent}>
+            <View style={{ height: 120 }} />
+            
+            <Feather name="check-circle" size={64} color="#10B981" style={{ marginBottom: 24 }} />
+            <Text style={styles.recordingTopLabel}>GRABACIÓN FINALIZADA</Text>
+            <Text style={styles.recordingTimer}>
+              00:{String(Math.floor(pendingRecording.duration / 1000)).padStart(2, '0')}
+            </Text>
+
+            <View style={{ flex: 1 }} />
+
+            <View style={{ flexDirection: "row", gap: 20, marginBottom: 60 }}>
+              <TouchableOpacity style={styles.discardButton} onPress={handleDiscardRecording}>
+                <Feather name="trash-2" size={24} color="#EF4444" />
+                <Text style={styles.discardButtonText}>Grabar de nuevo</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmRecording}>
+                <Feather name="send" size={24} color="#fff" />
+                <Text style={styles.confirmButtonText}>Enviar / Continuar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
       {/* Overlay Oscuro Durante Grabación */}
       {isRecording && (
         <View style={styles.recordingOverlay} pointerEvents="box-none">
@@ -274,7 +323,7 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
               {Array.from({ length: 30 }).map((_, i) => (
                 <View
                   key={i}
-                  style={[styles.waveBarDynamic, { height: 10 + Math.random() * 60 }]}
+                  style={[styles.waveBarDynamic, { height: 10 + (isPaused ? 10 : Math.random() * 60) }]}
                 />
               ))}
             </View>
@@ -282,13 +331,22 @@ export default function TestSequenceScreen({ route, navigation }: Props) {
             {/* Micrófono Apagado y Controles */}
             <View style={styles.recordingControlsArea}>
               <View style={styles.micRingOuterDark}>
-                <View style={styles.recordButtonDark}>
-                  <Feather name="mic" size={40} color="#333" />
+                <View style={[styles.recordButtonDark, isPaused && { backgroundColor: "#374151" }]}>
+                  <Feather name={isPaused ? "pause" : "mic"} size={40} color="#333" />
                 </View>
               </View>
 
               {/* Botones de acción flotantes */}
               <View style={styles.fabContainer}>
+                {/* Botón Pausa / Reanudar */}
+                <TouchableOpacity
+                  style={[styles.fabButton, { backgroundColor: isPaused ? "#4F46E5" : "#4B5563" }]}
+                  onPress={isPaused ? resumeRecording : pauseRecording}
+                  activeOpacity={0.8}
+                >
+                  <Feather name={isPaused ? "play" : "pause"} size={32} color="#fff" />
+                </TouchableOpacity>
+
                 {/* Botón Stop / Check */}
                 <TouchableOpacity
                   style={[styles.fabButton, isStopDisabled && { opacity: 0.5 }]}
@@ -357,6 +415,11 @@ const styles = StyleSheet.create({
   
   fabContainer: { position: "absolute", flexDirection: "row", gap: 40 },
   fabButton: { width: 64, height: 64, borderRadius: 32, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", elevation: 5, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 6 },
+  
+  discardButton: { backgroundColor: "#FEE2E2", paddingVertical: 16, paddingHorizontal: 24, borderRadius: 12, flexDirection: "row", alignItems: "center", gap: 8 },
+  discardButtonText: { fontFamily: "Inter_600SemiBold", color: "#EF4444", fontSize: 16 },
+  confirmButton: { backgroundColor: "#10B981", paddingVertical: 16, paddingHorizontal: 24, borderRadius: 12, flexDirection: "row", alignItems: "center", gap: 8 },
+  confirmButtonText: { fontFamily: "Inter_600SemiBold", color: "#fff", fontSize: 16 },
   
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.65)", justifyContent: "center", alignItems: "center", padding: 28 },
   modalCard: { backgroundColor: "#fff", borderRadius: 24, padding: 32, alignItems: "center", width: "100%", maxWidth: 340 },
