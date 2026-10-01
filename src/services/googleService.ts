@@ -1,6 +1,5 @@
 // URL obtenida al desplegar el Google Apps Script
-// TODO: Reemplazar con la URL real una vez desplegado el script
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/TU_SCRIPT_ID/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYPHoVyq85WLhFiGwJ8yN1cLDQRV-khn1jOWyKC0lP_6sBlnPnb6XxX2gfxxAaM7iv/exec';
 
 export async function uploadLearningCareData(
   studentId: string, 
