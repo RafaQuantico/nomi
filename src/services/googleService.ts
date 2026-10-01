@@ -1,5 +1,5 @@
 // URL obtenida al desplegar el Google Apps Script
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYPHoVyq85WLhFiGwJ8yN1cLDQRV-khn1jOWyKC0lP_6sBlnPnb6XxX2gfxxAaM7iv/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXG97kmUbEm0A8MIEKNGEF_whVlcrQT8mQ0AIIR4ZxTLZ73ffqKNruoVb-gNd4jZ36/exec';
 
 export async function uploadLearningCareData(
   studentId: string, 
