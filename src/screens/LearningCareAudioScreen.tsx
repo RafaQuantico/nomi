@@ -125,7 +125,8 @@ export default function LearningCareAudioScreen({ route, navigation }: Props) {
     try {
       await uploadLearningCareData(studentId, scores, routeResult, pendingRecording.base64);
     } catch (e) {
-      console.warn("Upload failed, continuing anyway for demo");
+      console.warn("Upload failed:", e);
+      Alert.alert("Aviso", "Hubo un problema guardando los datos (CORS/Apps Script). Revisa la consola.");
     }
     setIsUploading(false);
     setPendingRecording(null);
@@ -141,7 +142,8 @@ export default function LearningCareAudioScreen({ route, navigation }: Props) {
     try {
       await uploadLearningCareData(studentId, scores, routeResult);
     } catch (e) {
-      console.warn("Upload failed, continuing anyway for demo");
+      console.warn("Upload failed:", e);
+      Alert.alert("Aviso", "Hubo un problema guardando los datos (CORS/Apps Script). Revisa la consola.");
     }
     setIsUploading(false);
     navigation.replace("LearningCareResult", { studentId, routeResult, scores });
