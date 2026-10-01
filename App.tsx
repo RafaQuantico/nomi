@@ -35,7 +35,10 @@ import DashboardWelcomeScreen from './src/screens/DashboardWelcomeScreen';
 import DashboardInteractiveScreen from './src/screens/DashboardInteractiveScreen';
 import MentalHealthDataScreen from './src/screens/MentalHealthDataScreen';
 
-import LearningCareIntroScreen from './src/screens/LearningCareIntroScreen';
+import LearningCareAuthScreen from './src/screens/LearningCareAuthScreen';
+import LearningCareWelcomeScreen from './src/screens/LearningCareWelcomeScreen';
+import LearningCareRoadmapScreen from './src/screens/LearningCareRoadmapScreen';
+import LearningCareAssentScreen from './src/screens/LearningCareAssentScreen';
 import LearningCareQuestionScreen from './src/screens/LearningCareQuestionScreen';
 import LearningCareAudioScreen from './src/screens/LearningCareAudioScreen';
 import LearningCareResultScreen from './src/screens/LearningCareResultScreen';
@@ -61,10 +64,13 @@ export type RootStackParamList = {
   DashboardAuth: undefined;
   DashboardWelcome: { auth?: string; authenticated?: boolean };
   DashboardInteractive: undefined;
-  LearningCareIntro: undefined;
-  LearningCareQuestion: undefined;
-  LearningCareAudio: { routeResult: string; scores: any };
-  LearningCareResult: { routeResult: string; scores: any };
+  LearningCareAuth: undefined;
+  LearningCareWelcome: { schoolCode: string; studentId: string };
+  LearningCareRoadmap: { studentId: string };
+  LearningCareAssent: { studentId: string };
+  LearningCareQuestion: { studentId: string };
+  LearningCareAudio: { studentId: string; routeResult: string; scores: any };
+  LearningCareResult: { studentId: string; routeResult: string; scores: any };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -119,7 +125,10 @@ function AppNavigator() {
       <Stack.Screen name="DashboardAuth" component={DashboardAuthScreen} />
       <Stack.Screen name="DashboardWelcome" component={DashboardWelcomeScreen} />
       <Stack.Screen name="DashboardInteractive" component={DashboardInteractiveScreen} />
-      <Stack.Screen name="LearningCareIntro" component={LearningCareIntroScreen} />
+      <Stack.Screen name="LearningCareAuth" component={LearningCareAuthScreen} />
+      <Stack.Screen name="LearningCareWelcome" component={LearningCareWelcomeScreen} />
+      <Stack.Screen name="LearningCareRoadmap" component={LearningCareRoadmapScreen} />
+      <Stack.Screen name="LearningCareAssent" component={LearningCareAssentScreen} />
       <Stack.Screen name="LearningCareQuestion" component={LearningCareQuestionScreen} />
       <Stack.Screen name="LearningCareAudio" component={LearningCareAudioScreen} />
       <Stack.Screen name="LearningCareResult" component={LearningCareResultScreen} />
