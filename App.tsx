@@ -35,7 +35,6 @@ import DashboardWelcomeScreen from './src/screens/DashboardWelcomeScreen';
 import DashboardInteractiveScreen from './src/screens/DashboardInteractiveScreen';
 import MentalHealthDataScreen from './src/screens/MentalHealthDataScreen';
 
-import LearningCareAuthScreen from './src/screens/LearningCareAuthScreen';
 import LearningCareWelcomeScreen from './src/screens/LearningCareWelcomeScreen';
 import LearningCareRoadmapScreen from './src/screens/LearningCareRoadmapScreen';
 import LearningCareAssentScreen from './src/screens/LearningCareAssentScreen';
@@ -64,8 +63,7 @@ export type RootStackParamList = {
   DashboardAuth: undefined;
   DashboardWelcome: { auth?: string; authenticated?: boolean };
   DashboardInteractive: undefined;
-  LearningCareAuth: undefined;
-  LearningCareWelcome: { schoolCode: string; studentId: string };
+  LearningCareWelcome: { studentId: string; schoolCode?: string };
   LearningCareRoadmap: { studentId: string };
   LearningCareAssent: { studentId: string };
   LearningCareQuestion: { studentId: string };
@@ -125,7 +123,6 @@ function AppNavigator() {
       <Stack.Screen name="DashboardAuth" component={DashboardAuthScreen} />
       <Stack.Screen name="DashboardWelcome" component={DashboardWelcomeScreen} />
       <Stack.Screen name="DashboardInteractive" component={DashboardInteractiveScreen} />
-      <Stack.Screen name="LearningCareAuth" component={LearningCareAuthScreen} />
       <Stack.Screen name="LearningCareWelcome" component={LearningCareWelcomeScreen} />
       <Stack.Screen name="LearningCareRoadmap" component={LearningCareRoadmapScreen} />
       <Stack.Screen name="LearningCareAssent" component={LearningCareAssentScreen} />

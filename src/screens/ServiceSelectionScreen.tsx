@@ -44,7 +44,7 @@ export default function ServiceSelectionScreen({ navigation }: Props) {
     } else if (serviceId === 'mental') {
       navigation.navigate('MentalHealthPresentation');
     } else if (serviceId === 'learning') {
-      navigation.navigate('LearningCareAuth');
+      navigation.navigate('LearningCareWelcome', { studentId: 'Estudiante Demo' });
     }
   }
 
