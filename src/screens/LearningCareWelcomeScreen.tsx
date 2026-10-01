@@ -42,19 +42,6 @@ export default function LearningCareWelcomeScreen({ navigation, route }: Props) 
           Hoy tu colegio te invita a una actividad corta para saber cómo estás.
         </Text>
 
-        <View style={styles.videoCard}>
-          <View style={styles.playButtonWrapper}>
-            <View style={styles.playButton}>
-              <Feather name="play" size={24} color="#4338CA" style={{ marginLeft: 4 }} />
-            </View>
-          </View>
-          <Text style={styles.videoTitle}>¿Qué es NOMI y cómo funciona?</Text>
-          <Text style={styles.videoDuration}>VIDEO · [DURACIÓN]</Text>
-          
-          {/* Decorative wave */}
-          <View style={styles.videoWave} />
-        </View>
-
         <LinearGradient
           colors={['#4F46E5', '#38BDF8']}
           start={{ x: 0, y: 0 }}
@@ -80,6 +67,19 @@ export default function LearningCareWelcomeScreen({ navigation, route }: Props) 
             <Feather name="arrow-right" size={20} color="#1F2937" />
           </TouchableOpacity>
         </LinearGradient>
+
+        <View style={styles.videoCard}>
+          <View style={styles.playButtonWrapper}>
+            <View style={styles.playButton}>
+              <Feather name="play" size={24} color="#4338CA" style={{ marginLeft: 4 }} />
+            </View>
+          </View>
+          <Text style={styles.videoTitle}>¿Qué es NOMI y cómo funciona?</Text>
+          <Text style={styles.videoDuration}>VIDEO · [DURACIÓN]</Text>
+          
+          {/* Decorative wave */}
+          <View style={styles.videoWave} />
+        </View>
 
         <View style={styles.footerNote}>
           <Feather name="lock" size={16} color="#4338CA" />
