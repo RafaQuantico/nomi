@@ -18,9 +18,9 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const { studentId, scores, routeResult, audioBase64 } = data;
-    
+
     let audioUrl = '';
-    
+
     // 1. Guardar Audio en Google Drive
     if (audioBase64) {
       const folder = DriveApp.getFolderById(FOLDER_ID);
@@ -29,10 +29,10 @@ function doPost(e) {
       const file = folder.createFile(blob);
       audioUrl = file.getUrl();
     }
-    
+
     // 2. Guardar en Google Sheets
     const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getActiveSheet();
-    
+
     // Columnas: Fecha, ID Estudiante, Puntaje KIDSCREEN, Puntaje GAD-7, Puntaje PHQ-9, Ítem Sensible, Ruta, Audio URL
     sheet.appendRow([
       new Date(),
@@ -44,10 +44,10 @@ function doPost(e) {
       routeResult,
       audioUrl
     ]);
-    
+
     return ContentService.createTextOutput(JSON.stringify({ success: true, message: 'Datos guardados correctamente' }))
       .setMimeType(ContentService.MimeType.JSON);
-      
+
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: error.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
