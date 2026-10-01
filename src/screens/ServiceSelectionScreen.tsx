@@ -23,7 +23,8 @@ type ServiceIcon = { lib: 'Feather' | 'MCI'; name: string };
 
 const services: { id: string; title: string; iconLib: 'Feather' | 'MCI'; iconName: string; active: boolean }[] = [
   { id: 'fatigue',  title: 'Fatiga',       iconLib: 'Feather', iconName: 'zap',          active: true  },
-  { id: 'mental',   title: 'Salud Mental', iconLib: 'Feather', iconName: 'heart',        active: false },
+  { id: 'mental',   title: 'Salud Mental', iconLib: 'Feather', iconName: 'heart',        active: true },
+  { id: 'learning', title: 'Learning Care', iconLib: 'Feather', iconName: 'book-open',  active: true },
   { id: 'alcohol',  title: 'Alcohol',      iconLib: 'MCI',     iconName: 'glass-wine',    active: false },
   { id: 'drugs',    title: 'Drogas',       iconLib: 'MCI',     iconName: 'pill',          active: false },
 ];
@@ -42,6 +43,8 @@ export default function ServiceSelectionScreen({ navigation }: Props) {
       navigation.navigate('FatigueMetadata');
     } else if (serviceId === 'mental') {
       navigation.navigate('MentalHealthPresentation');
+    } else if (serviceId === 'learning') {
+      navigation.navigate('LearningCareIntro');
     }
   }
 

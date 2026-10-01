@@ -1,0 +1,375 @@
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
+  Animated,
+  Modal,
+  Alert,
+  Image
+} from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../../App";
+import { useWavRecorder } from "../hooks/useWavRecorder";
+
+type Props = NativeStackScreenProps<RootStackParamList, "LearningCareAudio">;
+
+const OPEN_QUESTION = "Cuenta con tus palabras: Un espacio abierto para decir lo que ninguna pregunta preguntó. ¿Hay algo más que quieras compartirnos?";
+
+export default function LearningCareAudioScreen({ route, navigation }: Props) {
+  const { routeResult, scores } = route.params;
+  
+  const { isRecording, isPaused, startRecording, pauseRecording, resumeRecording, stopRecording, requestPermission } = useWavRecorder();
+  
+  const [pendingRecording, setPendingRecording] = useState<{ base64: string; duration: number } | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showCountdown, setShowCountdown] = useState(false);
+  const [countdown, setCountdown] = useState(3);
+  const [showThankYou, setShowThankYou] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (isRecording) {
+      if (!isPaused) {
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(pulseAnim, { toValue: 1.05, duration: 600, useNativeDriver: true }),
+            Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+          ])
+        ).start();
+        
+        timerRef.current = setInterval(() => {
+          setRecordingSeconds(prev => prev + 1);
+        }, 1000);
+      } else {
+        pulseAnim.stopAnimation();
+        pulseAnim.setValue(1);
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    } else {
+      pulseAnim.stopAnimation();
+      pulseAnim.setValue(1);
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isRecording, isPaused]);
+
+  const minSeconds = 5;
+  const isStopDisabled = isRecording && recordingSeconds < minSeconds;
+
+  const startCountdown = async () => {
+    const hasPermission = await requestPermission();
+    if (!hasPermission) {
+      Alert.alert("Error", "No se pudo acceder al micrófono.");
+      return;
+    }
+    setCountdown(3);
+    setShowCountdown(true);
+    let counter = 3;
+    const interval = setInterval(() => {
+      counter -= 1;
+      if (counter > 0) {
+        setCountdown(counter);
+      } else {
+        clearInterval(interval);
+        setShowCountdown(false);
+        handleStartRecording();
+      }
+    }, 1000);
+  };
+
+  const handleStartRecording = async () => {
+    setRecordingSeconds(0);
+    try {
+      await startRecording();
+    } catch (e) {
+      Alert.alert("Error", "No se pudo acceder al micrófono.");
+    }
+  };
+
+  const handleStopRecording = async () => {
+    if (isStopDisabled) return;
+    setIsProcessing(true);
+    try {
+      const result = await stopRecording();
+      if (result) {
+        setIsProcessing(false);
+        setPendingRecording(result);
+      } else {
+        throw new Error("No audio generated");
+      }
+    } catch (e) {
+      setIsProcessing(false);
+      Alert.alert("Error", "Falló la grabación.");
+    }
+  };
+
+  const handleConfirmRecording = () => {
+    if (!pendingRecording) return;
+    // Here we could send the audio to the backend if needed
+    setPendingRecording(null);
+    
+    setShowThankYou(true);
+    setTimeout(() => {
+      setShowThankYou(false);
+      navigation.replace("LearningCareResult", { routeResult, scores });
+    }, 1500);
+  };
+
+  const handleSkip = () => {
+    // If they choose not to record anything
+    navigation.replace("LearningCareResult", { routeResult, scores });
+  };
+
+  const handleDiscardRecording = () => {
+    setPendingRecording(null);
+    setRecordingSeconds(0);
+  };
+
+  return (
+    <View style={styles.container}>
+      <SafeAreaView style={{ flex: 1 }}>
+        {/* Modal Cuenta Regresiva */}
+      <Modal visible={showCountdown} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalInstruction}>Prepárate para hablar</Text>
+            <View style={styles.countdownCircle}>
+              <Text style={styles.countdownNumber}>{countdown}</Text>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Gracias */}
+      <Modal visible={showThankYou} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Feather name="check-circle" size={54} color="#000" style={styles.thankYouIcon} />
+            <Text style={styles.thankYouText}>¡Gracias por tus respuestas!</Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Contenido Principal */}
+      <View style={[styles.content, isRecording && { opacity: 0.1 }]}>
+        <Image source={require('../../assets/Nomi_Negro.png')} style={styles.logo} resizeMode="contain" />
+        
+        <Text style={styles.stepLabel}>Pregunta Final (Opcional)</Text>
+
+        {!isProcessing && (
+          <View style={styles.instructionsBox}>
+            <Text style={styles.instructionHighlight}>{OPEN_QUESTION}</Text>
+          </View>
+        )}
+
+        {isProcessing && (
+          <View style={styles.processingBox}>
+            <Feather name="loader" size={24} color="#000" />
+            <Text style={styles.processingText}>Procesando audio...</Text>
+          </View>
+        )}
+
+        {/* Micrófono Estático */}
+        {!isRecording && (
+          <Animated.View style={{ transform: [{ scale: pulseAnim }], alignItems: 'center' }}>
+            <View style={styles.micRingOuter}>
+              <View style={styles.micRingInner}>
+                <TouchableOpacity
+                  style={[styles.recordButton, isProcessing && styles.recordButtonDisabled]}
+                  onPress={startCountdown}
+                  disabled={isProcessing}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={StyleSheet.absoluteFillObject} />
+                  {isProcessing ? (
+                    <Feather name="loader" size={32} color="#fff" />
+                  ) : (
+                    <Feather name="mic" size={40} color="#fff" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+            <Text style={{marginTop: 12, fontFamily: "Inter_500Medium", color: "#6B7280"}}>Tocar para grabar</Text>
+          </Animated.View>
+        )}
+        
+        <View style={{ flex: 1 }} />
+        {!isRecording && (
+          <View style={styles.bottomNav}>
+            <TouchableOpacity style={styles.backButton} onPress={handleSkip}>
+              <Text style={styles.backButtonText}>Omitir este paso</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+      </SafeAreaView>
+
+      {/* Overlay de Confirmación Post-Grabación */}
+      {pendingRecording && (
+        <View style={styles.recordingOverlay} pointerEvents="box-none">
+          <View style={styles.recordingOverlayContent}>
+            <View style={{ height: 120 }} />
+            
+            <Feather name="check-circle" size={64} color="#10B981" style={{ marginBottom: 24 }} />
+            <Text style={styles.recordingTopLabel}>GRABACIÓN FINALIZADA</Text>
+            <Text style={styles.recordingTimer}>
+              00:{String(Math.floor(pendingRecording.duration / 1000)).padStart(2, '0')}
+            </Text>
+
+            <View style={{ flex: 1 }} />
+
+            <View style={{ width: "100%", gap: 16, marginBottom: 60, paddingHorizontal: 20 }}>
+              <TouchableOpacity style={styles.confirmButtonWrapper} onPress={handleConfirmRecording} activeOpacity={0.8}>
+                <LinearGradient colors={['#3B82F6', '#14B8A6']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={styles.confirmButtonGradient}>
+                  <Feather name="send" size={20} color="#fff" />
+                  <Text style={styles.confirmButtonText}>Enviar y Terminar</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.discardButton} onPress={handleDiscardRecording} activeOpacity={0.8}>
+                <Feather name="trash-2" size={20} color="#FCA5A5" />
+                <Text style={styles.discardButtonText}>Grabar de nuevo</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Overlay Oscuro Durante Grabación */}
+      {isRecording && (
+        <View style={styles.recordingOverlay} pointerEvents="box-none">
+          <View style={styles.recordingOverlayContent}>
+            
+            <View style={{ height: 60 }} />
+            
+            <View style={styles.instructionsBoxDark}>
+              <Text style={styles.instructionHighlightDark}>{OPEN_QUESTION}</Text>
+            </View>
+
+            <View style={{ height: 20 }} />
+
+            <Text style={styles.recordingTopLabel}>GRABANDO</Text>
+            <Text style={styles.recordingTimer}>
+              00:{String(recordingSeconds).padStart(2, '0')}
+            </Text>
+
+            {isStopDisabled && minSeconds > 0 && (
+               <Text style={styles.recordingWarningLabel}>
+                 (Mínimo {minSeconds}s)
+               </Text>
+            )}
+
+            <View style={{ flex: 1 }} />
+
+            <View style={styles.waveformDynamic}>
+              {Array.from({ length: 30 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.waveBarDynamic, { height: 10 + (isPaused ? 10 : Math.random() * 60) }]}
+                />
+              ))}
+            </View>
+
+            <View style={styles.recordingControlsArea}>
+              <View style={styles.micRingOuterDark}>
+                <View style={[styles.recordButtonDark, isPaused && { backgroundColor: "#374151" }]}>
+                  <Feather name={isPaused ? "pause" : "mic"} size={40} color="#333" />
+                </View>
+              </View>
+
+              <View style={styles.fabContainer}>
+                <TouchableOpacity
+                  style={[styles.fabButton, { backgroundColor: isPaused ? "#4F46E5" : "#4B5563" }]}
+                  onPress={isPaused ? resumeRecording : pauseRecording}
+                  activeOpacity={0.8}
+                >
+                  <Feather name={isPaused ? "play" : "pause"} size={32} color="#fff" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.fabButton, isStopDisabled && { opacity: 0.5 }]}
+                  onPress={handleStopRecording}
+                  disabled={isStopDisabled}
+                  activeOpacity={0.8}
+                >
+                  <Feather name="check" size={32} color="#4F46E5" />
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            <View style={{ height: 100 }} />
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#fff" },
+  content: { flex: 1, padding: 24, alignItems: "center", paddingTop: 40 },
+  logo: { width: 120, height: 40, marginBottom: 16 },
+  stepLabel: { fontFamily: "Inter_500Medium", fontSize: 14, color: "#6B7280", marginBottom: 24 },
+  instructionsBox: { alignItems: "center", marginBottom: 36, paddingHorizontal: 16 },
+  instructionHighlight: { fontFamily: "Inter_700Bold", fontSize: 24, color: "#1F2937", textAlign: "center", lineHeight: 32 },
+  
+  instructionsBoxDark: { alignItems: "center", marginBottom: 16, paddingHorizontal: 16 },
+  instructionHighlightDark: { fontFamily: "Inter_700Bold", fontSize: 24, color: "#F9FAFB", textAlign: "center", lineHeight: 32 },
+  
+  processingBox: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 28 },
+  processingText: { fontFamily: "Inter_500Medium", fontSize: 15, color: "#4B5563" },
+  
+  micRingOuter: { padding: 4, borderRadius: 100, borderWidth: 1, borderColor: "#BFDBFE" },
+  micRingInner: { padding: 8, borderRadius: 100, backgroundColor: "#fff" },
+  recordButton: {
+    width: 110, height: 110, borderRadius: 55, overflow: "hidden",
+    alignItems: "center", justifyContent: "center",
+  },
+  recordButtonDisabled: { opacity: 0.5 },
+  
+  bottomNav: { width: "100%", alignItems: "center", paddingBottom: 20 },
+  backButton: { backgroundColor: "#F3F4F6", paddingVertical: 12, paddingHorizontal: 32, borderRadius: 8 },
+  backButtonText: { fontFamily: "Inter_500Medium", color: "#4B5563", fontSize: 14 },
+  
+  recordingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "#111827", opacity: 0.96 },
+  recordingOverlayContent: { ...StyleSheet.absoluteFillObject, alignItems: "center", padding: 24 },
+  recordingTopLabel: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#D1D5DB", letterSpacing: 1, marginBottom: 8 },
+  recordingTimer: { fontFamily: "Inter_400Regular", fontSize: 44, color: "#fff" },
+  recordingWarningLabel: { fontFamily: "Inter_500Medium", fontSize: 14, color: "#9CA3AF", marginTop: 8 },
+  
+  waveformDynamic: { flexDirection: "row", alignItems: "center", gap: 4, height: 100, marginBottom: 40 },
+  waveBarDynamic: { width: 4, backgroundColor: "#06B6D4", borderRadius: 2 },
+  
+  recordingControlsArea: { alignItems: "center", justifyContent: "center" },
+  micRingOuterDark: { padding: 4, borderRadius: 100, borderWidth: 1, borderColor: "#374151" },
+  recordButtonDark: { width: 110, height: 110, borderRadius: 55, backgroundColor: "#1F2937", alignItems: "center", justifyContent: "center" },
+  
+  fabContainer: { position: "absolute", flexDirection: "row", gap: 40 },
+  fabButton: { width: 64, height: 64, borderRadius: 32, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", elevation: 5, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 6 },
+  
+  discardButton: { backgroundColor: "rgba(239, 68, 68, 0.15)", paddingVertical: 16, borderRadius: 12, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1, borderColor: "rgba(239, 68, 68, 0.3)" },
+  discardButtonText: { fontFamily: "Inter_600SemiBold", color: "#FCA5A5", fontSize: 16 },
+  confirmButtonWrapper: { borderRadius: 12, overflow: "hidden" },
+  confirmButtonGradient: { paddingVertical: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
+  confirmButtonText: { fontFamily: "Inter_800ExtraBold", color: "#fff", fontSize: 16 },
+  
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.65)", justifyContent: "center", alignItems: "center", padding: 28 },
+  modalCard: { backgroundColor: "#fff", borderRadius: 24, padding: 32, alignItems: "center", width: "100%", maxWidth: 340 },
+  modalInstruction: { fontFamily: "Inter_500Medium", fontSize: 15, color: "#4B5563", textAlign: "center", marginBottom: 10 },
+  countdownCircle: { width: 88, height: 88, borderRadius: 44, backgroundColor: "#000", alignItems: "center", justifyContent: "center", marginTop: 20 },
+  countdownNumber: { fontFamily: "Inter_900Black", color: "#fff", fontSize: 36 },
+  thankYouIcon: { marginBottom: 16 },
+  thankYouText: { fontFamily: "Inter_800ExtraBold", fontSize: 18, color: "#1F2937", textAlign: "center" },
+});

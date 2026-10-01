@@ -35,6 +35,11 @@ import DashboardWelcomeScreen from './src/screens/DashboardWelcomeScreen';
 import DashboardInteractiveScreen from './src/screens/DashboardInteractiveScreen';
 import MentalHealthDataScreen from './src/screens/MentalHealthDataScreen';
 
+import LearningCareIntroScreen from './src/screens/LearningCareIntroScreen';
+import LearningCareQuestionScreen from './src/screens/LearningCareQuestionScreen';
+import LearningCareAudioScreen from './src/screens/LearningCareAudioScreen';
+import LearningCareResultScreen from './src/screens/LearningCareResultScreen';
+
 export type RootStackParamList = {
   Intro: undefined;
   Auth: undefined;
@@ -56,6 +61,10 @@ export type RootStackParamList = {
   DashboardAuth: undefined;
   DashboardWelcome: { auth?: string; authenticated?: boolean };
   DashboardInteractive: undefined;
+  LearningCareIntro: undefined;
+  LearningCareQuestion: undefined;
+  LearningCareAudio: { routeResult: string; scores: any };
+  LearningCareResult: { routeResult: string; scores: any };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -110,6 +119,10 @@ function AppNavigator() {
       <Stack.Screen name="DashboardAuth" component={DashboardAuthScreen} />
       <Stack.Screen name="DashboardWelcome" component={DashboardWelcomeScreen} />
       <Stack.Screen name="DashboardInteractive" component={DashboardInteractiveScreen} />
+      <Stack.Screen name="LearningCareIntro" component={LearningCareIntroScreen} />
+      <Stack.Screen name="LearningCareQuestion" component={LearningCareQuestionScreen} />
+      <Stack.Screen name="LearningCareAudio" component={LearningCareAudioScreen} />
+      <Stack.Screen name="LearningCareResult" component={LearningCareResultScreen} />
     </Stack.Navigator>
   );
 }
